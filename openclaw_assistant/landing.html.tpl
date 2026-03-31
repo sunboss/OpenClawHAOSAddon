@@ -7,30 +7,30 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0f1117;
-      --bg2: #161b22;
-      --bg3: #1f2937;
-      --border: #2d3748;
-      --border2: #374151;
-      --text: #e2e8f0;
-      --text2: #94a3b8;
-      --text3: #64748b;
-      --green: #22c55e;
-      --green-bg: #052e16;
-      --green-border: #166534;
-      --blue: #3b82f6;
-      --blue-bg: #1e3a5f;
-      --blue-border: #1d4ed8;
-      --amber: #f59e0b;
-      --amber-bg: #422006;
-      --amber-border: #92400e;
-      --red: #ef4444;
-      --red-bg: #3b0d0d;
-      --red-border: #991b1b;
+      --bg: #f3f6fb;
+      --bg2: #ffffff;
+      --bg3: #edf2f9;
+      --border: #d7e0ec;
+      --border2: #b8c7da;
+      --text: #142033;
+      --text2: #415169;
+      --text3: #6b7b93;
+      --green: #15803d;
+      --green-bg: #ecfdf3;
+      --green-border: #86efac;
+      --blue: #1d4ed8;
+      --blue-bg: #e8f0ff;
+      --blue-border: #93c5fd;
+      --amber: #b45309;
+      --amber-bg: #fff4e5;
+      --amber-border: #fdba74;
+      --red: #b91c1c;
+      --red-bg: #fef2f2;
+      --red-border: #fca5a5;
       --radius: 10px;
       --radius-sm: 6px;
     }
-    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 12px; font-size: 14px; line-height: 1.5; }
+    body { font-family: "Segoe UI", "Helvetica Neue", system-ui, sans-serif; background: linear-gradient(180deg, #f7f9fc 0%, #eef3f8 100%); color: var(--text); padding: 12px; font-size: 14px; line-height: 1.5; }
     a, button { font: inherit; }
     h2 { font-size: 18px; font-weight: 600; color: var(--text); }
     .page { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
@@ -39,7 +39,7 @@
     .header-info { flex: 1; }
     .header-info h2 { margin-bottom: 2px; }
     .header-info .sub { font-size: 12px; color: var(--text3); }
-    .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+    .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06); }
     .card-title { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
     .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 500; white-space: nowrap; }
     .badge-green { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-border); }
@@ -55,7 +55,7 @@
     .status-text { font-size: 15px; font-weight: 600; }
     .status-badges { display: flex; gap: 6px; flex-wrap: wrap; }
     .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 2px; }
-    .metric { background: var(--bg3); border-radius: var(--radius-sm); padding: 10px 12px; }
+    .metric { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; }
     .metric-label { font-size: 11px; color: var(--text3); margin-bottom: 4px; }
     .metric-value { font-size: 20px; font-weight: 600; color: var(--text); }
     .metric-sub { font-size: 11px; color: var(--text2); margin-top: 2px; }
@@ -71,10 +71,11 @@
     .kv-val { color: var(--text); font-weight: 500; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
     .mono { font-family: ui-monospace, monospace; font-size: 12px; color: var(--text2); }
     .copy-btn { padding: 2px 8px; border: 1px solid var(--border2); border-radius: 4px; background: transparent; color: var(--text2); cursor: pointer; font-size: 11px; }
-    .copy-btn:hover, .btn:hover { background: var(--bg3); color: var(--text); }
+    .copy-btn:hover, .btn:hover { background: #e2eaf5; color: var(--text); }
     .btn-grid { display: flex; gap: 8px; flex-wrap: wrap; }
-    .btn { padding: 8px 14px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border2); background: transparent; color: var(--text); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
-    .btn-primary { background: var(--blue-bg); color: var(--blue); border-color: var(--blue-border); }
+    .btn { padding: 8px 14px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--border2); background: #f8fbff; color: var(--text); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .btn-primary:hover { background: #1e40af; color: #fff; }
     .divider { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
     .hero { display: flex; flex-direction: column; gap: 10px; }
     .hero-title { font-size: 16px; font-weight: 600; }
@@ -96,9 +97,9 @@
     details > summary { cursor: pointer; padding: 10px 14px; font-size: 13px; color: var(--text2); font-weight: 500; background: var(--bg2); user-select: none; list-style: none; display: flex; justify-content: space-between; align-items: center; }
     details > summary::after { content: "+"; font-size: 16px; color: var(--text3); }
     details[open] > summary::after { content: "-"; }
-    .details-body { padding: 12px 14px; background: var(--bg); font-size: 13px; color: var(--text2); line-height: 1.7; border-top: 1px solid var(--border); }
-    .details-body pre { background: var(--bg2); padding: 8px 10px; border-radius: var(--radius-sm); overflow-x: auto; font-size: 12px; font-family: ui-monospace, monospace; margin: 6px 0; }
-    .details-body code { background: var(--bg2); padding: 1px 5px; border-radius: 4px; font-size: 12px; font-family: ui-monospace, monospace; }
+    .details-body { padding: 12px 14px; background: #f8fbff; font-size: 13px; color: var(--text2); line-height: 1.7; border-top: 1px solid var(--border); }
+    .details-body pre { background: #eef4fb; padding: 8px 10px; border-radius: var(--radius-sm); overflow-x: auto; font-size: 12px; font-family: ui-monospace, monospace; margin: 6px 0; }
+    .details-body code { background: #eef4fb; padding: 1px 5px; border-radius: 4px; font-size: 12px; font-family: ui-monospace, monospace; }
     .details-body ol, .details-body ul { padding-left: 20px; line-height: 1.9; }
     .hidden { display: none !important; }
     @media (max-width: 700px) {
