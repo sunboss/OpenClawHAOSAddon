@@ -1175,7 +1175,7 @@ GW_PUBLIC_URL="$GW_PUBLIC_URL" TERMINAL_PORT="$TERMINAL_PORT" \
   GATEWAY_INTERNAL_PORT="$GATEWAY_INTERNAL_PORT" GATEWAY_PORT="$GATEWAY_PORT" ACCESS_MODE="$ACCESS_MODE" GATEWAY_MODE="$GATEWAY_MODE" \
   DISK_TOTAL="$DISK_TOTAL" DISK_USED="$DISK_USED" DISK_AVAIL="$DISK_AVAIL" DISK_PCT="$DISK_PCT" \
   MEM_USED="$MEM_USED" MEM_TOTAL="$MEM_TOTAL" MEM_PCT="$MEM_PCT" CPU_PCT="$CPU_PCT" \
-  OPENCLAW_VERSION="$(openclaw --version 2>/dev/null | tr -d '[:space:]' || echo '-')" \
+  OPENCLAW_VERSION="$(openclaw --version 2>/dev/null | sed -nE 's/.*([0-9]{4}\.[0-9]{1,2}\.[0-9]{1,2}).*/\1/p' | head -1 || echo '-')" \
   NODE_VERSION="$(node --version 2>/dev/null || echo '-')" \
   ADDON_VERSION="$(grep -E '^version:' /etc/openclaw-addon-config.yaml 2>/dev/null | head -1 | sed -E 's/version:\s*\"?([^\"[:space:]]+)\"?/\1/' || echo '-')" \
   MCP_STATUS="$([ -f /config/.openclaw/.mcp_ha_configured ] && echo 'registered' || echo '')" \
