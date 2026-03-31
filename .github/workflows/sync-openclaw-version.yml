@@ -1,0 +1,46 @@
+name: Sync openclaw version
+
+# Triggered by Dependabot PRs that bump openclaw in package.json.
+# Automatically updates OPENCLAW_VERSION in Dockerfile to match,
+# keeping the two in sync without manual editing.
+
+on:
+  pull_request:
+    paths:
+      - "openclaw_assistant/package.json"
+
+permissions:
+  contents: write
+
+jobs:
+  sync-version:
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract new openclaw version from package.json
+        id: pkg
+        run: |
+          VERSION=$(jq -r '.dependencies.openclaw' openclaw_assistant/package.json)
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "New openclaw version: ${VERSION}"
+
+      - name: Update OPENCLAW_VERSION in Dockerfile
+        run: |
+          VERSION="${{ steps.pkg.outputs.version }}"
+          sed -i "s|^ARG OPENCLAW_VERSION=.*|ARG OPENCLAW_VERSION=${VERSION}|" \
+            openclaw_assistant/Dockerfile
+          echo "Dockerfile updated to OPENCLAW_VERSION=${VERSION}"
+
+      - name: Commit if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git diff --quiet && echo "No changes" || \
+            git commit -am "chore: sync OPENCLAW_VERSION=${{ steps.pkg.outputs.version }} in Dockerfile"
+          git push

@@ -1,0 +1,110 @@
+configuration:
+  timezone:
+    name: Timezone
+    description: Timezone for the add-on, for example Europe/Sofia or America/New_York.
+  enable_terminal:
+    name: Enable Web Terminal
+    description: Show the embedded web terminal in Home Assistant ingress.
+  terminal_port:
+    name: Terminal Port
+    description: Port number for ttyd. Change it if 7681 conflicts with another service.
+  gateway_public_url:
+    name: Gateway Public URL
+    description: Public URL used by the Open Gateway UI button. Leave empty to hide the button until you know the final URL.
+  homeassistant_token:
+    name: Home Assistant Token
+    description: Optional long-lived Home Assistant token for MCP setup or local HA API use.
+  http_proxy:
+    name: Outbound HTTP Proxy
+    description: Optional proxy URL for outbound HTTP and HTTPS requests, for example http://192.168.2.1:3128.
+  router_ssh_host:
+    name: Router SSH Host
+    description: Optional router or firewall hostname/IP for SSH-based automations.
+  router_ssh_user:
+    name: Router SSH User
+    description: Optional SSH username for the router or firewall.
+  router_ssh_key_path:
+    name: Router SSH Key Path
+    description: Private key path inside the add-on container. Default is /data/keys/router_ssh.
+  clean_session_locks_on_start:
+    name: Clean Session Locks on Start
+    description: Remove stale session lock files when the add-on starts.
+  clean_session_locks_on_exit:
+    name: Clean Session Locks on Exit
+    description: Remove session lock files when the add-on stops cleanly.
+  gateway_mode:
+    name: Gateway Mode
+    description: Run the gateway locally or connect this add-on to a remote gateway.
+    options:
+      local: Local
+      remote: Remote
+  gateway_remote_url:
+    name: Remote Gateway URL
+    description: WebSocket URL for remote mode, for example ws://host:18789 or wss://gateway.example.com:443.
+  gateway_bind_mode:
+    name: Gateway Bind Mode
+    description: Local gateway bind mode. Usually overridden by the access mode preset.
+    options:
+      loopback: Loopback only
+      lan: LAN
+      tailnet: Tailnet
+  gateway_port:
+    name: Gateway Port
+    description: Port number for the OpenClaw gateway.
+  access_mode:
+    name: Access Mode
+    description: Simplified secure access preset for the gateway.
+    options:
+      custom: Custom
+      local_only: Local Only
+      lan_https: LAN HTTPS
+      lan_reverse_proxy: LAN Reverse Proxy
+      tailnet_https: Tailnet HTTPS
+  gateway_auth_mode:
+    name: Gateway Auth Mode
+    description: Gateway authentication mode. Usually overridden by the access mode preset.
+    options:
+      token: Token
+      trusted-proxy: Trusted Proxy
+  gateway_trusted_proxies:
+    name: Gateway Trusted Proxies
+    description: Comma-separated trusted proxy IP or CIDR list for trusted-proxy mode.
+  gateway_additional_allowed_origins:
+    name: Additional Allowed Origins
+    description: Extra origins merged into gateway.controlUi.allowedOrigins, comma-separated.
+  enable_openai_api:
+    name: Enable OpenAI API
+    description: Enable the OpenAI-compatible Chat Completions endpoint.
+  force_ipv4_dns:
+    name: Force IPv4 DNS Order
+    description: Prefer IPv4 DNS results first. Recommended for most HAOS virtual machines.
+  nginx_log_level:
+    name: Nginx Log Level
+    description: Access log verbosity for the built-in nginx ingress proxy.
+    options:
+      minimal: Minimal
+      full: Full
+  gateway_env_vars:
+    name: Gateway Environment Variables
+    description: Extra environment variables passed to the gateway at startup as name/value entries.
+  auto_configure_mcp:
+    name: Auto-Configure MCP
+    description: Automatically register Home Assistant as an MCP server when a Home Assistant token is set.
+  telegram_bot_token:
+    name: Telegram Bot Token
+    description: Optional Telegram bot token to inject into openclaw.json on startup.
+  discord_bot_token:
+    name: Discord Bot Token
+    description: Optional Discord bot token to inject into openclaw.json on startup.
+  slack_bot_token:
+    name: Slack Bot Token
+    description: Optional Slack bot token to inject into openclaw.json on startup.
+  slack_app_token:
+    name: Slack App Token
+    description: Optional Slack app token for Socket Mode injection at startup.
+  sandbox_mode:
+    name: Sandbox Mode
+    description: Tool execution isolation for non-main sessions.
+    options:
+      off: Off
+      non-main: Non-main only

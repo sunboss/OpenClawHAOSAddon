@@ -1,0 +1,23 @@
+version: 2
+updates:
+  # Track upstream openclaw npm package — auto-opens PR when a new version is published.
+  # After merging, bump OPENCLAW_VERSION in Dockerfile and version in config.yaml together.
+  - package-ecosystem: npm
+    directory: "/openclaw_assistant"
+    schedule:
+      interval: daily
+    allow:
+      - dependency-name: openclaw
+    commit-message:
+      prefix: "chore(deps)"
+    labels:
+      - "dependencies"
+      - "openclaw-upgrade"
+
+  # Keep GitHub Actions up to date
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(ci)"
