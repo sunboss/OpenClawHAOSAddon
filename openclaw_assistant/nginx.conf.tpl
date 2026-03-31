@@ -47,7 +47,11 @@ http {
     }
 
     location = /health {
-      __HEALTH_BLOCK__
+      proxy_pass http://127.0.0.1:48100/health;
+      proxy_http_version 1.1;
+      proxy_set_header Host $host;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_read_timeout 30s;
     }
 
     location ~ ^/action/(status|restart)$ {

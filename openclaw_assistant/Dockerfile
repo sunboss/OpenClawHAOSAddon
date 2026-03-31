@@ -128,6 +128,7 @@ if [ -z "${LS_COLORS+x}" ]; then
 fi
 EOF
 COPY run.sh /run.sh
+COPY config.yaml /etc/openclaw-addon-config.yaml
 COPY oc_config_helper.py /oc_config_helper.py
 COPY render_nginx.py /render_nginx.py
 COPY action_server.py /action_server.py

@@ -33,6 +33,42 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _run_command(self, action: str, command: list[str], timeout: int) -> tuple[int, dict]:
+        try:
+            completed = subprocess.run(
+                command,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+                check=False,
+            )
+        except subprocess.TimeoutExpired:
+            return HTTPStatus.GATEWAY_TIMEOUT, {"ok": False, "action": action, "error": "timeout"}
+        except Exception as exc:
+            return HTTPStatus.INTERNAL_SERVER_ERROR, {"ok": False, "action": action, "error": str(exc)}
+
+        stdout = (completed.stdout or "").strip()
+        stderr = (completed.stderr or "").strip()
+        return (
+            HTTPStatus.OK if completed.returncode == 0 else HTTPStatus.BAD_GATEWAY,
+            {
+                "ok": completed.returncode == 0,
+                "action": action,
+                "exit_code": completed.returncode,
+                "stdout": stdout,
+                "stderr": stderr,
+            },
+        )
+
+    def do_GET(self) -> None:
+        if self.path.rstrip("/") != "/health":
+            self._send_json(HTTPStatus.NOT_FOUND, {"ok": False, "error": "not_found"})
+            return
+
+        status, payload = self._run_command("health", ["openclaw", "health", "--json"], 20)
+        self._send_json(status, payload)
+        return
+
     def do_POST(self) -> None:
         prefix = "/action/"
         if not self.path.startswith(prefix):
@@ -46,39 +82,8 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         timeout = 60 if action == "restart" else 20
-        try:
-            completed = subprocess.run(
-                command,
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-                check=False,
-            )
-        except subprocess.TimeoutExpired:
-            self._send_json(
-                HTTPStatus.GATEWAY_TIMEOUT,
-                {"ok": False, "action": action, "error": "timeout"},
-            )
-            return
-        except Exception as exc:
-            self._send_json(
-                HTTPStatus.INTERNAL_SERVER_ERROR,
-                {"ok": False, "action": action, "error": str(exc)},
-            )
-            return
-
-        stdout = (completed.stdout or "").strip()
-        stderr = (completed.stderr or "").strip()
-        self._send_json(
-            HTTPStatus.OK if completed.returncode == 0 else HTTPStatus.BAD_GATEWAY,
-            {
-                "ok": completed.returncode == 0,
-                "action": action,
-                "exit_code": completed.returncode,
-                "stdout": stdout,
-                "stderr": stderr,
-            },
-        )
+        status, payload = self._run_command(action, command, timeout)
+        self._send_json(status, payload)
 
     def log_message(self, fmt: str, *args) -> None:
         print(f"action-server: {fmt % args}")

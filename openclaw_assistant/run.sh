@@ -586,9 +586,8 @@ PY
   # Run non-interactive onboard to register workspace and skill paths.
   # --no-install-daemon: container lifecycle is managed by the add-on supervisor, not systemd/launchd.
   # --mode local:        force local gateway (not remote).
-  # --no-open:           headless  - do not attempt to open a browser.
   echo "INFO: Running non-interactive onboard (container mode)..."
-  if ! openclaw onboard --no-install-daemon --mode local --no-open 2>&1; then
+  if ! openclaw onboard --no-install-daemon --mode local 2>&1; then
     echo "WARN: openclaw onboard exited non-zero during first boot."
     echo "WARN: Basic config exists, but provider/workspace initialization may be incomplete."
   fi
@@ -1178,7 +1177,7 @@ GW_PUBLIC_URL="$GW_PUBLIC_URL" TERMINAL_PORT="$TERMINAL_PORT" \
   MEM_USED="$MEM_USED" MEM_TOTAL="$MEM_TOTAL" MEM_PCT="$MEM_PCT" CPU_PCT="$CPU_PCT" \
   OPENCLAW_VERSION="$(openclaw --version 2>/dev/null | tr -d '[:space:]' || echo '-')" \
   NODE_VERSION="$(node --version 2>/dev/null || echo '-')" \
-  ADDON_VERSION="$(jq -r '.version // "-"' /etc/labels 2>/dev/null || echo '__ADDON_VERSION_PLACEHOLDER__')" \
+  ADDON_VERSION="$(grep -E '^version:' /etc/openclaw-addon-config.yaml 2>/dev/null | head -1 | sed -E 's/version:\s*\"?([^\"[:space:]]+)\"?/\1/' || echo '-')" \
   MCP_STATUS="$([ -f /config/.openclaw/.mcp_ha_configured ] && echo 'registered' || echo '')" \
   GATEWAY_TOKEN_AVAILABLE="$([ -n "$GATEWAY_TOKEN_VALUE" ] && echo 'true' || echo 'false')" \
   NGINX_LOG_LEVEL="$NGINX_LOG_LEVEL" \

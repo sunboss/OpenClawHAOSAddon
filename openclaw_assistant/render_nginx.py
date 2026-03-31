@@ -62,20 +62,8 @@ def main() -> None:
     else:
         access_log_block = "access_log /dev/stdout;"
 
-    if gateway_mode == "remote":
-        health_block = "return 204;"
-    else:
-        health_block = (
-            f"proxy_pass http://127.0.0.1:{internal_gw_port}/health;\n"
-            "      proxy_http_version 1.1;\n"
-            "      proxy_set_header Host $host;\n"
-            "      proxy_set_header X-Forwarded-Proto $scheme;\n"
-            "      proxy_read_timeout 30s;"
-        )
-
     conf = tpl.replace("__NGINX_ACCESS_LOG__", access_log_block)
     conf = conf.replace("__TERMINAL_PORT__", terminal_port)
-    conf = conf.replace("__HEALTH_BLOCK__", health_block)
 
     https_block = ""
     if enable_https and https_port and internal_gw_port:
