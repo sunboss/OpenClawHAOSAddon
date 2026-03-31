@@ -66,6 +66,15 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         status, payload = self._run_command("health", ["openclaw", "health", "--json"], 20)
+        if status == HTTPStatus.OK:
+            try:
+                parsed = json.loads(payload.get("stdout") or "{}")
+            except json.JSONDecodeError:
+                parsed = None
+            if isinstance(parsed, dict) and parsed:
+                self._send_json(status, parsed)
+                return
+
         self._send_json(status, payload)
         return
 

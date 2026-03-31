@@ -5,6 +5,16 @@ Historical update records were intentionally removed.
 
 ## [2026.04.01.3] - 2026-04-01
 
+## [2026.04.01.4] - 2026-04-01
+
+### Changed
+- Translate the HAOS landing page to Chinese and add terminal quick-command buttons for common OpenClaw diagnostics and setup flows.
+
+### Fixed
+- Fix local ingress health responses so the landing page reads the official `openclaw health --json` payload instead of a wrapped action-server envelope.
+- Fix landing-page ingress URL resolution under Home Assistant so health, token, and action requests resolve against the add-on ingress base path.
+- Make the native Gateway UI button fetch the gateway token first and open the Control UI with `#token=...` when available.
+
 ### Changed
 - Adopt `Asia/Shanghai`, `access_mode: lan_https`, `enable_openai_api: true`, and `auto_configure_mcp: true` as the project defaults for the HAOS add-on profile.
 - Keep `gateway_trusted_proxies` and `gateway_additional_allowed_origins` empty by default instead of shipping unsafe wildcard values.
