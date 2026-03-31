@@ -300,6 +300,9 @@ openclaw devices approve &lt;requestId&gt;</pre>
   var OC_VER = __OPENCLAW_VERSION_JSON__;
 
   function $(id) { return document.getElementById(id); }
+  function ingressUrl(path) {
+    return "./" + String(path || "").replace(/^\/+/, "");
+  }
   function setButtonState(id, disabled) {
     var el = $(id);
     if (!el) { return; }
@@ -419,7 +422,7 @@ openclaw devices approve &lt;requestId&gt;</pre>
       setHealthState(false, "Set gateway_public_url");
       return;
     }
-    var url = GATEWAY_MODE === "remote" ? GW_URL + "/health" : "/health";
+    var url = GATEWAY_MODE === "remote" ? GW_URL + "/health" : ingressUrl("health");
     try {
       var res = await fetch(url, { cache: "no-cache" });
       if (!res.ok) { throw new Error("HTTP " + res.status); }
@@ -440,7 +443,7 @@ openclaw devices approve &lt;requestId&gt;</pre>
       $("tokenCopyBtn").classList.remove("hidden");
       return;
     }
-    fetch("/token", { cache: "no-cache" })
+    fetch(ingressUrl("token"), { cache: "no-cache" })
       .then(function (r) {
         if (!r.ok) { throw new Error("token"); }
         return r.text();
@@ -476,7 +479,7 @@ openclaw devices approve &lt;requestId&gt;</pre>
   function runGatewayAction(action, label) {
     var fb = $("actionFeedback");
     fb.textContent = label + "...";
-    fetch("/action/" + action, {
+    fetch(ingressUrl("action/" + action), {
       method: "POST",
       cache: "no-cache"
     })
