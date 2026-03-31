@@ -3,6 +3,15 @@
 This project is now treated as a fresh baseline.
 Historical update records were intentionally removed.
 
+## [2026.04.01.2] - 2026-04-01
+
+### Fixed
+- Fix local landing-page version rendering so the add-on version is read from the shipped add-on config instead of a missing labels file.
+- Fix local ingress health checks to probe the running OpenClaw gateway via the local action server instead of a broken direct `/health` assumption.
+- Fix first-boot onboarding flags for OpenClaw `2026.3.31` by removing the unsupported `--no-open` option.
+- Improve landing-page readability with a light high-contrast theme for HAOS.
+- Normalize the displayed OpenClaw version so the UI shows a clean semantic version instead of the raw CLI banner string.
+
 ## [2026.04.01.1] - 2026-04-01
 
 ### Changed
