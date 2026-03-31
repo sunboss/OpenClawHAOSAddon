@@ -3,6 +3,15 @@
 This project is now treated as a fresh baseline.
 Historical update records were intentionally removed.
 
+## [2026.04.01.3] - 2026-04-01
+
+### Changed
+- Adopt `Asia/Shanghai`, `access_mode: lan_https`, `enable_openai_api: true`, and `auto_configure_mcp: true` as the project defaults for the HAOS add-on profile.
+- Keep `gateway_trusted_proxies` and `gateway_additional_allowed_origins` empty by default instead of shipping unsafe wildcard values.
+
+### Fixed
+- Update the documentation default-value tables so they match the shipped add-on configuration again.
+
 ## [2026.04.01.2] - 2026-04-01
 
 ### Fixed

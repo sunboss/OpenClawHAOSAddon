@@ -1,5 +1,5 @@
 name: OpenClaw HAOS Add-on
-version: "2026.04.01.2"
+version: "2026.04.01.3"
 slug: openclaw_assistant
 description: Run OpenClaw inside Home Assistant OS as a dedicated HAOS add-on.
 url: https://github.com/sunboss/OpenClawHAOSAddon
@@ -25,7 +25,7 @@ map:
   - share:rw
   - media:rw
 options:
-  timezone: "Europe/Sofia"
+  timezone: "Asia/Shanghai"
 
   # Enable web terminal inside Home Assistant (Ingress) via ttyd
   enable_terminal: true
@@ -84,7 +84,7 @@ options:
   #                    (nginx + oauth2-proxy, Caddy auth, Traefik forward auth, Pomerium, etc.)
   #                    Do not use this with a plain TLS terminator or load balancer.
   # tailnet_https: Tailscale interface bind + token auth
-  access_mode: custom
+  access_mode: lan_https
 
   # Gateway authentication mode:
   # - token: standard token auth (default)
@@ -107,7 +107,7 @@ options:
   # Enable OpenAI-compatible Chat Completions API endpoint
   # When enabled, OpenClaw can be used as a conversation agent in HA Assist pipeline
   # via Extended OpenAI Conversation (HACS) or any OpenAI-compatible client
-  enable_openai_api: false
+  enable_openai_api: true
 
   # Force IPv4-first DNS result ordering for Node fetch/network calls.
   # Most HAOS VMs lack IPv6 egress, causing web_fetch / Telegram timeouts.
@@ -135,7 +135,7 @@ options:
   # Auto-configure MCP (Model Context Protocol) for Home Assistant.
   # When enabled and homeassistant_token is set, automatically registers HA as an
   # MCP server in OpenClaw so the AI can control Home Assistant entities/services.
-  auto_configure_mcp: false
+  auto_configure_mcp: true
 
   # Channel tokens (optional convenience fields)
   # Set these to auto-inject tokens into openclaw.json on startup.
