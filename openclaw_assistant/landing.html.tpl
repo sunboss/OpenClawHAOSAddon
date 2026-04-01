@@ -515,10 +515,13 @@
         <button class="btn" data-term-cmd="tail -f /tmp/openclaw/openclaw-$(date +%F).log">tail gateway log</button>
         <button class="btn" data-term-cmd="mcporter list HA">mcp list</button>
         <button class="btn" data-term-cmd="cat /config/.mcporter/mcporter.json">mcp config</button>
+        <button class="btn" data-term-cmd="ls -la /share/openclaw-backup/latest">backup dir</button>
+        <button class="btn" data-term-cmd="mkdir -p /share/openclaw-backup/latest && cp -a /config/.openclaw /share/openclaw-backup/latest/ && cp -a /config/.mcporter /share/openclaw-backup/latest/">backup state</button>
         <button class="btn" data-term-cmd="openclaw security audit --deep">security audit</button>
         <button class="btn" data-term-cmd="openclaw memory status --deep">memory status</button>
         <button class="btn" data-term-cmd="jq -r '.gateway.auth.token' /config/.openclaw/openclaw.json">read token</button>
       </div>
+    <div class="hero-sub" style="margin-top:6px"><code>/share/openclaw-backup/latest</code></div>
     <div class="hero-sub" style="margin-top:8px">
       点击后会把命令填入下方终端，不会自动执行；按回车即可运行。
     </div>

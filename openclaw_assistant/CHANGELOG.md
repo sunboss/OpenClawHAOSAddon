@@ -3,6 +3,11 @@
 This project is now treated as a fresh baseline.
 Historical update records were intentionally removed.
 
+## [2026.04.01.12] - 2026-04-01
+
+### Changed
+- Add landing-page backup shortcuts for viewing `/share/openclaw-backup/latest` and manually copying `.openclaw` / `.mcporter` into the shared backup folder from the embedded terminal.
+
 ## [2026.04.01.11] - 2026-04-01
 
 ### Fixed
