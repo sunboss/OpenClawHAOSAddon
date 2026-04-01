@@ -3,7 +3,7 @@
 This project is now treated as a fresh baseline.
 Historical update records were intentionally removed.
 
-## [2026.04.02.15] - 2026-04-02
+## [2026.04.02.1] - 2026-04-02
 
 ### Changed
 - Redesign the landing page into a clearer two-column workspace so status and primary actions stay in the main column while diagnostics, help, and terminal tools move into a focused side column.
