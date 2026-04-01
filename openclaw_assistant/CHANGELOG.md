@@ -3,6 +3,15 @@
 This project is now treated as a fresh baseline.
 Historical update records were intentionally removed.
 
+## [2026.04.01.8] - 2026-04-01
+
+### Changed
+- Add dedicated add-on configuration options for Gemini-backed memory search so Home Assistant users can enable semantic memory without hand-editing `gateway_env_vars`.
+- Expose a default Gemini embedding model value (`gemini-embedding-001`) directly in the HA add-on configuration UI.
+
+### Fixed
+- Wire the new Gemini memory-search options into startup so enabling the switch exports `GEMINI_API_KEY`, configures `agents.defaults.memorySearch` for Gemini, and disables memory search cleanly when the switch is off.
+
 ## [2026.04.01.7] - 2026-04-01
 
 ### Changed

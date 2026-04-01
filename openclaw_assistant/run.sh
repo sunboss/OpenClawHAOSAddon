@@ -20,6 +20,9 @@ fi
 TZNAME=$(jq -r '.timezone // "Europe/Sofia"' "$OPTIONS_FILE")
 GW_PUBLIC_URL=$(jq -r '.gateway_public_url // empty' "$OPTIONS_FILE")
 HA_TOKEN=$(jq -r '.homeassistant_token // empty' "$OPTIONS_FILE")
+ENABLE_GEMINI_MEMORY_SEARCH=$(jq -r '.enable_gemini_memory_search // false' "$OPTIONS_FILE")
+GEMINI_API_KEY_OPTION=$(jq -r '.gemini_api_key // empty' "$OPTIONS_FILE")
+GEMINI_MEMORY_MODEL=$(jq -r '.gemini_memory_model // "gemini-embedding-001"' "$OPTIONS_FILE")
 ADDON_HTTP_PROXY=$(jq -r '.http_proxy // empty' "$OPTIONS_FILE")
 ENABLE_TERMINAL=$(jq -r '.enable_terminal // true' "$OPTIONS_FILE")
 TERMINAL_PORT_RAW=$(jq -r '.terminal_port // 7681' "$OPTIONS_FILE")
@@ -408,6 +411,12 @@ if [ "$GW_ENV_VARS_TYPE" = "array" ] || [ "$GW_ENV_VARS_TYPE" = "object" ] || { 
   fi
 elif [ "$GW_ENV_VARS_TYPE" != "null" ]; then
   echo "WARN: Invalid gateway_env_vars format in add-on options (expected list, string or object), skipping"
+fi
+
+# Optional Gemini memory-search shortcut: keep the main chat model/provider
+# untouched, but manage memorySearch + GEMINI_API_KEY from add-on options.
+if [ -n "$GEMINI_API_KEY_OPTION" ]; then
+  export GEMINI_API_KEY="$GEMINI_API_KEY_OPTION"
 fi
 
 # ------------------------------------------------------------------------------
@@ -976,6 +985,26 @@ elif [ "$AUTO_CONFIGURE_MCP" = "true" ] && [ -z "$HA_TOKEN" ]; then
   echo "INFO: To auto-configure, set homeassistant_token in add-on Configuration, then restart"
 fi
 
+# ------------------------------------------------------------------------------
+# Optional Gemini memory search setup
+# Keeps the chat model unchanged and only adjusts memorySearch settings.
+# ------------------------------------------------------------------------------
+if [ "$ENABLE_GEMINI_MEMORY_SEARCH" = "true" ]; then
+  if [ -n "${GEMINI_API_KEY:-}" ]; then
+    echo "INFO: Configuring Gemini memory search (model=${GEMINI_MEMORY_MODEL}) ..."
+    openclaw config set agents.defaults.memorySearch.enabled true --json >/dev/null 2>&1 || true
+    openclaw config set agents.defaults.memorySearch.provider "gemini" >/dev/null 2>&1 || true
+    openclaw config set agents.defaults.memorySearch.model "$GEMINI_MEMORY_MODEL" >/dev/null 2>&1 || true
+    echo "INFO: Gemini memory search configured; main chat model remains unchanged"
+  else
+    echo "WARN: Gemini memory search is enabled but gemini_api_key is empty"
+    echo "WARN: Set gemini_api_key in add-on Configuration or disable Gemini memory search"
+  fi
+else
+  echo "INFO: Gemini memory search disabled from add-on configuration"
+  openclaw config set agents.defaults.memorySearch.enabled false --json >/dev/null 2>&1 || true
+fi
+
 start_openclaw_runtime() {
   echo "Starting OpenClaw HAOS Add-on runtime (openclaw)..."
   if [ "$GATEWAY_MODE" = "remote" ]; then
@@ -1317,6 +1346,23 @@ GW_PUBLIC_URL="$GW_PUBLIC_URL" TERMINAL_PORT="$TERMINAL_PORT" \
       echo 'configured'
     else
       echo ''
+    fi
+  )" \
+  MEMORY_SEARCH_ENABLED="$(
+    if [ -f /config/.openclaw/openclaw.json ]; then
+      jq -r '.agents.defaults.memorySearch.enabled // false' /config/.openclaw/openclaw.json 2>/dev/null || echo 'false'
+    else
+      echo 'false'
+    fi
+  )" \
+  MEMORY_SEARCH_PROVIDER="$(
+    if [ -f /config/.openclaw/openclaw.json ]; then
+      jq -r '.agents.defaults.memorySearch.provider // empty' /config/.openclaw/openclaw.json 2>/dev/null || true
+    fi
+  )" \
+  MEMORY_SEARCH_MODEL="$(
+    if [ -f /config/.openclaw/openclaw.json ]; then
+      jq -r '.agents.defaults.memorySearch.model // empty' /config/.openclaw/openclaw.json 2>/dev/null || true
     fi
   )" \
   GW_PID="${GW_PID:-}" \

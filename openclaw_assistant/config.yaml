@@ -1,5 +1,5 @@
 name: OpenClaw HAOS Add-on
-version: "2026.04.01.7"
+version: "2026.04.01.8"
 slug: openclaw_assistant
 description: Run OpenClaw inside Home Assistant OS as a dedicated HAOS add-on.
 url: https://github.com/sunboss/OpenClawHAOSAddon
@@ -46,6 +46,19 @@ options:
   # Home Assistant's built-in /api/mcp endpoint in mcporter during startup.
   # Requires a Home Assistant version that exposes the native MCP endpoint.
   auto_configure_mcp: true
+
+  # Enable Gemini-backed memory search while keeping your main chat model unchanged.
+  # When enabled, the add-on will configure OpenClaw memory search to use Gemini
+  # embeddings and export GEMINI_API_KEY to the gateway process.
+  enable_gemini_memory_search: false
+
+  # Optional Google AI Studio / Gemini API key for memory search.
+  # This is only used for the Gemini memory/embedding path and does not replace
+  # your main chat model provider configuration.
+  gemini_api_key: ""
+
+  # Default Gemini embedding model for memory search when enabled.
+  gemini_memory_model: "gemini-embedding-001"
 
   # Automatically approve pending local device pairing requests.
   # Recommended for personal HAOS installs where you are the only operator.
@@ -175,6 +188,9 @@ schema:
   gateway_public_url: str?
   homeassistant_token: str?
   auto_configure_mcp: bool?
+  enable_gemini_memory_search: bool?
+  gemini_api_key: str?
+  gemini_memory_model: str?
   auto_approve_device_pairing: bool?
   http_proxy: str?
 

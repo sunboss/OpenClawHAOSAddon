@@ -286,6 +286,7 @@
     .action-panel.state-ok { border-color: var(--green-border); background: linear-gradient(180deg, #f2fff7, #edf9f1); }
     .action-panel.state-warn { border-color: var(--amber-border); background: linear-gradient(180deg, #fff9ef, #fff3e2); }
     .action-panel.state-err { border-color: var(--red-border); background: linear-gradient(180deg, #fff6f6, #fff0f0); }
+    #actionPanel { display: none !important; }
     .action-head {
       padding: 10px 14px;
       display: flex;
@@ -372,6 +373,16 @@
       <div class="sub">Home Assistant 插件 | 版本 __ADDON_VERSION__</div>
     </div>
     <span class="badge badge-gray" id="modeBadge">__ACCESS_MODE__</span>
+  </div>
+
+  <div class="kv hidden" id="pidRowPlainTemplate">
+    <span class="kv-key">PID</span>
+    <span class="kv-val">
+      <span class="badge badge-blue">Gateway __GW_PID__</span>
+      <span class="badge badge-gray">nginx __NGINX_PID__</span>
+      <span class="badge badge-gray">ttyd __TTYD_PID__</span>
+      <span class="badge badge-gray">Action __ACTION_PID__</span>
+    </span>
   </div>
 
   <div class="card">
@@ -539,6 +550,10 @@
       <span>MCP</span>
       <span class="diag-muted" id="diagMcp">__MCP_STATUS__</span>
     </div>
+    <div class="diag-row hidden" id="diagMemoryRow">
+      <span>Memory Search</span>
+      <span class="diag-muted" id="diagMemory">-</span>
+    </div>
   </div>
 
   <div id="wizardCard" class="hidden"></div>
@@ -597,6 +612,9 @@ openclaw devices approve &lt;requestId&gt;</pre>
   var GW_URL = __GW_URL_JSON__;
   var TOKEN_AVAILABLE = __TOKEN_AVAILABLE_JSON__ === "true";
   var OC_VER = __OPENCLAW_VERSION_JSON__;
+  var MEMORY_SEARCH_ENABLED = __MEMORY_SEARCH_ENABLED_JSON__ === "true";
+  var MEMORY_SEARCH_PROVIDER = __MEMORY_SEARCH_PROVIDER_JSON__;
+  var MEMORY_SEARCH_MODEL = __MEMORY_SEARCH_MODEL_JSON__;
   var ACCESS_MODE_LABELS = {
     lan_https: "\u5c40\u57df\u7f51 HTTPS",
     tailnet_https: "Tailscale HTTPS",
@@ -646,6 +664,7 @@ openclaw devices approve &lt;requestId&gt;</pre>
     selectText(el);
   }
   function setActionFeedback(kind, title, body, code) {
+    return;
     var panel = $("actionPanel");
     var titleEl = $("actionTitle");
     var stateEl = $("actionState");
@@ -842,9 +861,22 @@ openclaw devices approve &lt;requestId&gt;</pre>
       badges[1].textContent = "nginx " + nginxPid;
       badges[2].textContent = "ttyd " + ttydPid;
       badges[3].textContent = "Action " + actionPid;
+      if (row.id !== "pidRowPlain") {
+        row.classList.add("hidden");
+      }
     });
   }
 
+  function attachPidRowTemplate() {
+    var template = $("pidRowPlainTemplate");
+    var list = document.querySelector(".card .kv-list");
+    if (!template || !list || $("pidRowPlain")) { return; }
+    template.id = "pidRowPlain";
+    template.classList.remove("hidden");
+    list.appendChild(template);
+  }
+
+  attachPidRowTemplate();
   normalizePidRow();
 
   if (ACCESS_MODE === "lan_https" && HTTPS_PORT) {
@@ -877,6 +909,22 @@ openclaw devices approve &lt;requestId&gt;</pre>
     } else if (!st) {
       mcpEl.textContent = "未配置";
       mcpEl.className = "diag-muted";
+    }
+  }
+
+  var memoryRow = $("diagMemoryRow");
+  var memoryEl = $("diagMemory");
+  if (memoryRow && memoryEl) {
+    if (MEMORY_SEARCH_ENABLED) {
+      var parts = [];
+      if (MEMORY_SEARCH_PROVIDER) { parts.push(MEMORY_SEARCH_PROVIDER); }
+      if (MEMORY_SEARCH_MODEL) { parts.push(MEMORY_SEARCH_MODEL); }
+      memoryEl.textContent = parts.length ? parts.join(" / ") : "已启用";
+      memoryEl.className = "diag-ok";
+      memoryEl.title = parts.length ? "当前启用的 memory search provider / model" : "Memory search 已启用";
+      memoryRow.classList.remove("hidden");
+    } else {
+      memoryRow.classList.add("hidden");
     }
   }
 

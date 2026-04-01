@@ -17,6 +17,15 @@ configuration:
   auto_configure_mcp:
     name: Enable Native Home Assistant MCP
     description: Register Home Assistant's built-in MCP endpoint during add-on startup when a Home Assistant token is set.
+  enable_gemini_memory_search:
+    name: Enable Gemini Memory Search
+    description: Configure OpenClaw memory search to use Gemini embeddings without changing your main chat model.
+  gemini_api_key:
+    name: Gemini API Key
+    description: Optional Google AI Studio API key used only for Gemini memory search and embeddings.
+  gemini_memory_model:
+    name: Gemini Memory Model
+    description: Gemini embedding model used when Gemini memory search is enabled.
   auto_approve_device_pairing:
     name: Auto-Approve Device Pairing
     description: Automatically approve pending local device pairing requests during add-on startup.

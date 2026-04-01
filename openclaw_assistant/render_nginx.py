@@ -46,6 +46,9 @@ def main() -> None:
     node_version = env("NODE_VERSION", "-")
     addon_version = env("ADDON_VERSION", "-")
     mcp_status = env("MCP_STATUS", "")
+    memory_search_enabled = env("MEMORY_SEARCH_ENABLED", "false")
+    memory_search_provider = env("MEMORY_SEARCH_PROVIDER", "")
+    memory_search_model = env("MEMORY_SEARCH_MODEL", "")
     token_available = env("GATEWAY_TOKEN_AVAILABLE", "false")
     gw_pid = env("GW_PID", "-")
     nginx_pid = env("NGINX_PID", "-")
@@ -131,6 +134,9 @@ def main() -> None:
         "__NODE_VERSION__": html.escape(node_version),
         "__ADDON_VERSION__": html.escape(addon_version),
         "__MCP_STATUS__": html.escape(mcp_status),
+        "__MEMORY_SEARCH_ENABLED__": html.escape(memory_search_enabled),
+        "__MEMORY_SEARCH_PROVIDER__": html.escape(memory_search_provider),
+        "__MEMORY_SEARCH_MODEL__": html.escape(memory_search_model),
         "__GW_PID__": html.escape(gw_pid),
         "__NGINX_PID__": html.escape(nginx_pid),
         "__TTYD_PID__": html.escape(ttyd_pid),
@@ -149,6 +155,9 @@ def main() -> None:
         "__HTTPS_PORT_JSON__": js_string(https_port if enable_https else ""),
         "__TOKEN_AVAILABLE_JSON__": js_string(token_available),
         "__OPENCLAW_VERSION_JSON__": js_string(openclaw_version),
+        "__MEMORY_SEARCH_ENABLED_JSON__": js_string(memory_search_enabled),
+        "__MEMORY_SEARCH_PROVIDER_JSON__": js_string(memory_search_provider),
+        "__MEMORY_SEARCH_MODEL_JSON__": js_string(memory_search_model),
     }
 
     landing = landing_tpl
