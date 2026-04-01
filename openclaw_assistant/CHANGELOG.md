@@ -3,6 +3,11 @@
 This project is now treated as a fresh baseline.
 Historical update records were intentionally removed.
 
+## [2026.04.01.11] - 2026-04-01
+
+### Fixed
+- Remove the duplicate PID display row from the HAOS landing page and keep a single normalized process row for Gateway, nginx, ttyd, and Action service PIDs.
+
 ## [2026.04.01.10] - 2026-04-01
 
 ### Fixed

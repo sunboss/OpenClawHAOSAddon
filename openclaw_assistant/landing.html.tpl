@@ -848,6 +848,7 @@ openclaw devices approve &lt;requestId&gt;</pre>
   $("gatewayModeText").title = GATEWAY_MODE;
 
   function normalizePidRow() {
+    var kept = false;
     var rows = document.querySelectorAll(".kv");
     rows.forEach(function (row) {
       var badges = row.querySelectorAll(".badge");
@@ -867,19 +868,17 @@ openclaw devices approve &lt;requestId&gt;</pre>
       badges[1].textContent = "nginx " + nginxPid;
       badges[2].textContent = "ttyd " + ttydPid;
       badges[3].textContent = "Action " + actionPid;
-      if (row.id !== "pidRowPlain") {
+      if (!kept) {
+        kept = true;
+        row.classList.remove("hidden");
+      } else {
         row.classList.add("hidden");
       }
     });
   }
 
   function attachPidRowTemplate() {
-    var template = $("pidRowPlainTemplate");
-    var list = document.querySelector(".card .kv-list");
-    if (!template || !list || $("pidRowPlain")) { return; }
-    template.id = "pidRowPlain";
-    template.classList.remove("hidden");
-    list.appendChild(template);
+    return;
   }
 
   attachPidRowTemplate();
