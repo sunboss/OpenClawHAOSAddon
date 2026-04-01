@@ -172,7 +172,19 @@ export OPENCLAW_CONFIG_DIR=/config/.openclaw
 export OPENCLAW_WORKSPACE_DIR=/config/.openclaw/workspace
 export XDG_CONFIG_HOME=/config
 
-mkdir -p /config/.openclaw /config/.openclaw/identity /config/.openclaw/workspace /config/keys /config/secrets
+mkdir -p /config/.openclaw /config/.openclaw/identity /config/.openclaw/workspace /config/.openclaw/workspace/memory /config/keys /config/secrets
+
+ensure_openclaw_fs_permissions() {
+  # Keep the OpenClaw state directory private because it can contain tokens,
+  # per-device pairing state, and other sensitive local gateway data.
+  [ -d /config/.openclaw ] && chmod 700 /config/.openclaw 2>/dev/null || true
+  [ -d /config/.openclaw/identity ] && chmod 700 /config/.openclaw/identity 2>/dev/null || true
+  [ -d /config/.openclaw/workspace ] && chmod 700 /config/.openclaw/workspace 2>/dev/null || true
+  [ -d /config/.openclaw/workspace/memory ] && chmod 700 /config/.openclaw/workspace/memory 2>/dev/null || true
+  [ -f /config/.openclaw/openclaw.json ] && chmod 600 /config/.openclaw/openclaw.json 2>/dev/null || true
+}
+
+ensure_openclaw_fs_permissions
 
 # ------------------------------------------------------------------------------
 # Sync built-in OpenClaw skills from image to persistent storage
@@ -582,6 +594,7 @@ cfg = {
 cfg_path.write_text(json.dumps(cfg, indent=2) + "\n", encoding='utf-8')
 print("INFO: Wrote minimal OpenClaw config (gateway.mode=local, auth.token generated)")
 PY
+  ensure_openclaw_fs_permissions
 
   # Run non-interactive onboard to register workspace and skill paths.
   # --no-install-daemon: container lifecycle is managed by the add-on supervisor, not systemd/launchd.
@@ -621,6 +634,7 @@ if [ -f "$OPENCLAW_CONFIG_PATH" ] && [ -f "$HELPER_PATH" ]; then
   inject_channel_token "channels.discord.token"     "$DISCORD_BOT_TOKEN"  "Discord bot token"
   inject_channel_token "channels.slack.botToken"    "$SLACK_BOT_TOKEN"    "Slack bot token"
   inject_channel_token "channels.slack.appToken"    "$SLACK_APP_TOKEN"    "Slack app token"
+  ensure_openclaw_fs_permissions
 fi
 
 # ------------------------------------------------------------------------------
@@ -639,6 +653,7 @@ if [ -f "$OPENCLAW_CONFIG_PATH" ]; then
       echo "ERROR: Gateway configuration may be incorrect; aborting startup."
       exit "${rc}"
     fi
+    ensure_openclaw_fs_permissions
   else
     echo "WARN: oc_config_helper.py not found, cannot apply gateway settings"
     echo "INFO: Ensure the add-on image includes oc_config_helper.py and restart"
@@ -666,6 +681,7 @@ cfg.setdefault('agents', {}).setdefault('defaults', {}).setdefault('sandbox', {}
 p.write_text(json.dumps(cfg, indent=2) + '\n')
 print('INFO: sandbox_mode=non-main applied to openclaw.json')
 PY
+    ensure_openclaw_fs_permissions
   else
     # sandbox off  - remove sandbox.mode if present to restore default
     python3 - <<PY
@@ -680,6 +696,7 @@ try:
 except (KeyError, TypeError):
     pass  # already absent, nothing to do
 PY
+    ensure_openclaw_fs_permissions
   fi
 fi
 
@@ -825,6 +842,7 @@ PY
   # - allowInsecureAuth=false閿涘牏顩﹀銏ゆ姜鐎瑰鍙忔稉濠佺瑓閺傚洩顓荤拠渚婄礆
   python3 "$HELPER_PATH" set-control-ui-origins "$ALLOWED_ORIGINS" "$GATEWAY_ADDITIONAL_ALLOWED_ORIGINS" || \
     echo "WARN: Could not set controlUi settings  - gateway may reject the Control UI"
+  ensure_openclaw_fs_permissions
 fi
 
 # ------------------------------------------------------------------------------

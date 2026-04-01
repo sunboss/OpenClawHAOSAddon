@@ -3,7 +3,15 @@
 This project is now treated as a fresh baseline.
 Historical update records were intentionally removed.
 
-## [2026.04.01.3] - 2026-04-01
+## [2026.04.01.5] - 2026-04-01
+
+### Changed
+- Refine the HAOS landing page with clearer action-result panels, grouped terminal shortcuts, a native-Gateway cache-clearing tip, and improved copy interactions for gateway URL/token values.
+
+### Fixed
+- Improve copy behavior under Home Assistant ingress by falling back to text selection when clipboard APIs are unavailable.
+- Clarify the secure-context diagnostic so `lan_https` correctly distinguishes between the HA ingress page and the external native HTTPS Gateway UI.
+- Tighten startup permissions for `/config/.openclaw` and `openclaw.json`, and pre-create the persistent workspace memory directory so fresh installs stop raising avoidable `security audit` and `memory status` warnings.
 
 ## [2026.04.01.4] - 2026-04-01
 
@@ -14,6 +22,8 @@ Historical update records were intentionally removed.
 - Fix local ingress health responses so the landing page reads the official `openclaw health --json` payload instead of a wrapped action-server envelope.
 - Fix landing-page ingress URL resolution under Home Assistant so health, token, and action requests resolve against the add-on ingress base path.
 - Make the native Gateway UI button fetch the gateway token first and open the Control UI with `#token=...` when available.
+
+## [2026.04.01.3] - 2026-04-01
 
 ### Changed
 - Adopt `Asia/Shanghai`, `access_mode: lan_https`, `enable_openai_api: true`, and `auto_configure_mcp: true` as the project defaults for the HAOS add-on profile.

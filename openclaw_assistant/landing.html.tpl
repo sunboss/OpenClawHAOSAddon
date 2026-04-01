@@ -201,6 +201,17 @@
     .kv-key { color: var(--text2); white-space: nowrap; flex-shrink: 0; }
     .kv-val { color: var(--text); font-weight: 500; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
     .mono { font-family: ui-monospace, monospace; font-size: 12px; color: var(--text2); }
+    .mono-copyable {
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 8px;
+      transition: background .18s ease, color .18s ease;
+      user-select: all;
+    }
+    .mono-copyable:hover {
+      background: var(--bg4);
+      color: var(--text);
+    }
     .copy-btn {
       padding: 5px 10px;
       border: 1px solid var(--border2);
@@ -246,6 +257,69 @@
     .hero { display: flex; flex-direction: column; gap: 10px; }
     .hero-title { font-size: 22px; font-weight: 700; letter-spacing: -0.03em; }
     .hero-sub { color: var(--text2); font-size: 13px; line-height: 1.8; }
+    .hero-tip {
+      margin-top: 2px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #fff8ef, #fff2df);
+      border: 1px solid var(--amber-border);
+      color: var(--amber);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+    .section-subtitle {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin: 4px 0 8px;
+    }
+    .action-panel {
+      margin-top: 10px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(248,251,255,0.96), rgba(239,245,252,0.92));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+      overflow: hidden;
+    }
+    .action-panel.state-ok { border-color: var(--green-border); background: linear-gradient(180deg, #f2fff7, #edf9f1); }
+    .action-panel.state-warn { border-color: var(--amber-border); background: linear-gradient(180deg, #fff9ef, #fff3e2); }
+    .action-panel.state-err { border-color: var(--red-border); background: linear-gradient(180deg, #fff6f6, #fff0f0); }
+    .action-head {
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid rgba(217, 227, 239, 0.8);
+    }
+    .action-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .action-body {
+      padding: 12px 14px;
+      font-size: 13px;
+      color: var(--text2);
+      line-height: 1.8;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .action-pre {
+      margin-top: 8px;
+      padding: 12px;
+      height: 280px;
+      min-height: 280px;
+      overflow: auto;
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.94);
+      color: #dbeafe;
+      font-size: 12px;
+      line-height: 1.7;
+      font-family: ui-monospace, monospace;
+    }
     .diag-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
     .diag-row:last-child { border-bottom: none; }
     .diag-ok { color: var(--green); }
@@ -352,7 +426,7 @@
       </div>
       <div class="kv">
         <span class="kv-key">网关模式</span>
-        <span class="kv-val"><span class="badge badge-gray">__GATEWAY_MODE__</span></span>
+        <span class="kv-val"><span class="badge badge-gray" id="gatewayModeText">__GATEWAY_MODE__</span></span>
       </div>
       <div class="kv">
         <span class="kv-key">配置目录</span>
@@ -361,14 +435,14 @@
       <div class="kv">
         <span class="kv-key">网关地址</span>
         <span class="kv-val">
-          <span class="mono" id="gatewayUrlText">__GATEWAY_PUBLIC_URL__</span>
+          <span class="mono mono-copyable" id="gatewayUrlText" title="点击复制">__GATEWAY_PUBLIC_URL__</span>
           <button class="copy-btn" id="gatewayCopyBtn">复制</button>
         </span>
       </div>
       <div class="kv" id="tokenRow">
         <span class="kv-key">网关令牌</span>
         <span class="kv-val">
-          <span class="mono" id="tokenDisplay">已隐藏</span>
+          <span class="mono mono-copyable" id="tokenDisplay" title="点击复制">已隐藏</span>
           <button class="copy-btn" id="tokenRevealBtn">显示</button>
           <button class="copy-btn hidden" id="tokenCopyBtn">复制</button>
         </span>
@@ -390,6 +464,9 @@
       <div class="hero-sub">
         这个页面是 OpenClaw 在 Home Assistant 里的统一入口。你可以在新标签页打开原生 Gateway 控制界面，也可以留在这里查看健康状态、令牌、终端和访问诊断。
       </div>
+      <div class="hero-tip">
+        如果打开原生 Gateway 界面后仍提示设备签名过期，请先清除该站点缓存或改用无痕窗口，再重新打开。
+      </div>
     </div>
     <hr class="divider">
     <div class="card-title">操作</div>
@@ -403,14 +480,19 @@
     </div>
     <hr class="divider">
     <div class="card-title">终端快捷命令</div>
+    <div class="section-subtitle">配对与初始化</div>
     <div class="btn-grid">
       <button class="btn" data-term-cmd="openclaw devices list">devices list</button>
       <button class="btn" data-term-cmd="openclaw devices approve --latest">approve --latest</button>
       <button class="btn" data-term-cmd="openclaw onboard">onboard</button>
       <button class="btn" data-term-cmd="openclaw doctor --fix">doctor --fix</button>
+    </div>
+    <div class="section-subtitle">诊断与维护</div>
+    <div class="btn-grid">
       <button class="btn" data-term-cmd="openclaw health --json">health --json</button>
       <button class="btn" data-term-cmd="openclaw status --deep">status --deep</button>
       <button class="btn" data-term-cmd="openclaw logs --follow">logs --follow</button>
+      <button class="btn" data-term-cmd="tail -f /tmp/openclaw/openclaw-$(date +%F).log">tail gateway log</button>
       <button class="btn" data-term-cmd="openclaw security audit --deep">security audit</button>
       <button class="btn" data-term-cmd="openclaw memory status --deep">memory status</button>
       <button class="btn" data-term-cmd="jq -r '.gateway.auth.token' /config/.openclaw/openclaw.json">read token</button>
@@ -419,7 +501,13 @@
       点击后会把命令填入下方终端，不会自动执行；按回车即可运行。
     </div>
     <hr class="divider">
-    <div id="actionFeedback" style="margin-top:8px;font-size:12px;color:var(--text2)"></div>
+    <div id="actionPanel" class="action-panel hidden">
+      <div class="action-head">
+        <div class="action-title" id="actionTitle">操作结果</div>
+        <span class="badge badge-gray" id="actionState">提示</span>
+      </div>
+      <div class="action-body" id="actionBody"></div>
+    </div>
   </div>
 
   <div class="card">
@@ -495,6 +583,17 @@ openclaw devices approve &lt;requestId&gt;</pre>
   var GW_URL = __GW_URL_JSON__;
   var TOKEN_AVAILABLE = __TOKEN_AVAILABLE_JSON__ === "true";
   var OC_VER = __OPENCLAW_VERSION_JSON__;
+  var ACCESS_MODE_LABELS = {
+    lan_https: "\u5c40\u57df\u7f51 HTTPS",
+    tailnet_https: "Tailscale HTTPS",
+    lan_reverse_proxy: "\u5c40\u57df\u7f51\u53cd\u5411\u4ee3\u7406",
+    local_only: "\u4ec5\u672c\u673a",
+    custom: "\u81ea\u5b9a\u4e49"
+  };
+  var GATEWAY_MODE_LABELS = {
+    local: "\u672c\u5730",
+    remote: "\u8fdc\u7a0b"
+  };
 
   function $(id) { return document.getElementById(id); }
   function ingressUrl(path) {
@@ -510,22 +609,63 @@ openclaw devices approve &lt;requestId&gt;</pre>
     var base = String(url).replace(/#.*$/, "");
     return base + "#token=" + encodeURIComponent(token);
   }
+  function safeText(value, fallback) {
+    var text = String(value == null ? "" : value).trim();
+    return text || fallback || "";
+  }
   function findTerminalTextarea(doc) {
     if (!doc) { return null; }
     return doc.querySelector(".xterm-helper-textarea, textarea.xterm-helper-textarea, textarea");
   }
+  function selectText(el) {
+    if (!el) { return; }
+    var range = document.createRange();
+    range.selectNodeContents(el);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+  function setTextAndSelect(id, text) {
+    var el = $(id);
+    if (!el) { return; }
+    el.textContent = text;
+    selectText(el);
+  }
+  function setActionFeedback(kind, title, body, code) {
+    var panel = $("actionPanel");
+    var titleEl = $("actionTitle");
+    var stateEl = $("actionState");
+    var bodyEl = $("actionBody");
+    if (!panel || !titleEl || !stateEl || !bodyEl) { return; }
+    panel.className = "action-panel state-" + kind;
+    titleEl.textContent = title;
+    stateEl.textContent = kind === "ok" ? "\u5b8c\u6210" : kind === "warn" ? "\u6ce8\u610f" : "\u5931\u8d25";
+    stateEl.className = "badge " + (kind === "ok" ? "badge-green" : kind === "warn" ? "badge-amber" : "badge-amber");
+    bodyEl.innerHTML = "";
+    if (body) {
+      var msg = document.createElement("div");
+      msg.textContent = body;
+      bodyEl.appendChild(msg);
+    }
+    if (code) {
+      var pre = document.createElement("pre");
+      pre.className = "action-pre";
+      pre.textContent = code;
+      bodyEl.appendChild(pre);
+    }
+    panel.classList.remove("hidden");
+  }
   function injectCommandToTerminal(command) {
     var frame = $("termFrame");
-    var feedback = $("actionFeedback");
     if (!frame || !frame.contentWindow) {
-      feedback.textContent = "终端尚未就绪，无法填入命令。";
+      setActionFeedback("warn", "终端未就绪", "终端尚未就绪，无法填入命令。");
       return;
     }
     try {
       var doc = frame.contentWindow.document;
       var input = findTerminalTextarea(doc);
       if (!input) {
-        feedback.textContent = "终端输入框暂不可用，请先点击一次下方终端。";
+        setActionFeedback("warn", "终端未就绪", "终端输入框暂不可用，请先点击一次下方终端。");
         return;
       }
       frame.contentWindow.focus();
@@ -537,10 +677,48 @@ openclaw devices approve &lt;requestId&gt;</pre>
         data: command,
         inputType: "insertText"
       }));
-      feedback.textContent = "命令已填入终端：" + command;
+      setActionFeedback("ok", "命令已填入终端", "按回车即可执行。", command);
     } catch (_err) {
-      feedback.textContent = "无法直接写入终端，请先点击终端后再试。";
+      setActionFeedback("warn", "终端写入失败", "无法直接写入终端，请先点击终端后再试。");
     }
+  }
+  function copyText(text) {
+    var value = String(text || "");
+    if (!value) {
+      return Promise.reject(new Error("empty"));
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(value);
+    }
+    return new Promise(function (resolve, reject) {
+      var ta = document.createElement("textarea");
+      ta.value = value;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.top = "-1000px";
+      ta.style.left = "-1000px";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      ta.setSelectionRange(0, ta.value.length);
+      try {
+        if (document.execCommand("copy")) {
+          document.body.removeChild(ta);
+          resolve();
+          return;
+        }
+      } catch (_err) {
+      }
+      document.body.removeChild(ta);
+      reject(new Error("copy_failed"));
+    });
+  }
+  function flashButtonText(id, successText, idleText) {
+    var el = $(id);
+    if (!el) { return; }
+    el.textContent = successText;
+    setTimeout(function () { el.textContent = idleText; }, 1500);
   }
   function setButtonState(id, disabled) {
     var el = $(id);
@@ -602,8 +780,18 @@ openclaw devices approve &lt;requestId&gt;</pre>
     location.hostname === "localhost" ||
     location.hostname === "127.0.0.1" ||
     location.hostname === "::1";
-  $("diagSecure").textContent = isSecure ? "安全" : "不安全";
-  $("diagSecure").className = isSecure ? "diag-ok" : "diag-err";
+  var gwUrlIsHttps = /^https:\/\//i.test(GW_URL || "");
+  if (isSecure) {
+    $("diagSecure").textContent = "安全";
+    $("diagSecure").className = "diag-ok";
+  } else if (ACCESS_MODE === "lan_https" && gwUrlIsHttps) {
+    $("diagSecure").textContent = "入口页非安全，原生界面安全";
+    $("diagSecure").className = "diag-warn";
+    $("diagSecure").title = "当前 HA Ingress 页面本身不是安全上下文，但通过上方“打开原生 Gateway 界面”进入的 HTTPS 控制界面是安全的。";
+  } else {
+    $("diagSecure").textContent = "不安全";
+    $("diagSecure").className = "diag-err";
+  }
 
   var modeColors = {
     lan_https: "badge-green",
@@ -613,6 +801,12 @@ openclaw devices approve &lt;requestId&gt;</pre>
     custom: "badge-amber"
   };
   $("modeBadge").className = "badge " + (modeColors[ACCESS_MODE] || "badge-gray");
+  $("modeBadge").textContent = ACCESS_MODE_LABELS[ACCESS_MODE] || ACCESS_MODE;
+  $("modeBadge").title = ACCESS_MODE;
+  $("diagAccess").textContent = ACCESS_MODE_LABELS[ACCESS_MODE] || ACCESS_MODE;
+  $("diagAccess").title = ACCESS_MODE;
+  $("gatewayModeText").textContent = GATEWAY_MODE_LABELS[GATEWAY_MODE] || GATEWAY_MODE;
+  $("gatewayModeText").title = GATEWAY_MODE;
 
   if (ACCESS_MODE === "lan_https" && HTTPS_PORT) {
     var certBtn = $("certBtn");
@@ -640,7 +834,6 @@ openclaw devices approve &lt;requestId&gt;</pre>
   } else {
     accessEl.className = "diag-warn";
   }
-  accessEl.textContent = ACCESS_MODE;
 
   if (!GW_URL) {
     $("gatewayCopyBtn").disabled = true;
@@ -714,6 +907,7 @@ openclaw devices approve &lt;requestId&gt;</pre>
           openWithToken(tokenValue);
         })
         .catch(function () {
+          setActionFeedback("warn", "未能自动附带令牌", "已退回普通打开方式。如果控制界面要求令牌，可先点击“显示”或“read token”。");
           window.open(gwBtn.href, "_blank", "noopener,noreferrer");
         });
     });
@@ -739,29 +933,60 @@ openclaw devices approve &lt;requestId&gt;</pre>
         $("tokenCopyBtn").classList.remove("hidden");
       })
       .catch(function () {
-        $("tokenDisplay").textContent = "可在终端里用 jq 读取。";
+        setTextAndSelect("tokenDisplay", "可在终端里用 jq 读取。");
+        setActionFeedback("warn", "读取令牌失败", "可以使用下方快捷命令“read token”，或在终端中手动读取。");
       });
   });
 
   $("tokenCopyBtn") && $("tokenCopyBtn").addEventListener("click", function () {
     if (!tokenValue) { return; }
-    navigator.clipboard.writeText(tokenValue).then(function () {
-      $("tokenCopyBtn").textContent = "已复制";
-      setTimeout(function () { $("tokenCopyBtn").textContent = "复制"; }, 1500);
-    });
+    copyText(tokenValue)
+      .then(function () {
+        flashButtonText("tokenCopyBtn", "已复制", "复制");
+      })
+      .catch(function () {
+        setTextAndSelect("tokenDisplay", tokenValue);
+        setActionFeedback("warn", "令牌复制失败", "已为你选中令牌文本，请手动复制。");
+      });
   });
 
   $("gatewayCopyBtn").addEventListener("click", function () {
     if (!GW_URL) { return; }
-    navigator.clipboard.writeText(GW_URL).then(function () {
-      $("gatewayCopyBtn").textContent = "已复制";
-      setTimeout(function () { $("gatewayCopyBtn").textContent = "复制"; }, 1500);
+    copyText(GW_URL)
+      .then(function () {
+        flashButtonText("gatewayCopyBtn", "已复制", "复制");
+      })
+      .catch(function () {
+        setTextAndSelect("gatewayUrlText", GW_URL);
+        setActionFeedback("warn", "地址复制失败", "已为你选中网关地址，请手动复制。");
+      });
+  });
+
+  $("gatewayUrlText").addEventListener("click", function () {
+    if (!GW_URL) { return; }
+    copyText(GW_URL).then(function () {
+      flashButtonText("gatewayCopyBtn", "已复制", "复制");
+    }).catch(function () {
+      setTextAndSelect("gatewayUrlText", GW_URL);
+      setActionFeedback("warn", "地址已选中", "当前环境不支持直接复制，请手动复制已选中的地址。");
+    });
+  });
+
+  $("tokenDisplay").addEventListener("click", function () {
+    if (!tokenValue) {
+      selectText($("tokenDisplay"));
+      return;
+    }
+    copyText(tokenValue).then(function () {
+      flashButtonText("tokenCopyBtn", "已复制", "复制");
+    }).catch(function () {
+      setTextAndSelect("tokenDisplay", tokenValue);
+      setActionFeedback("warn", "令牌已选中", "当前环境不支持直接复制，请手动复制已选中的令牌。");
     });
   });
 
   function runGatewayAction(action, label) {
-    var fb = $("actionFeedback");
-    fb.textContent = label + "中...";
+    setActionFeedback("warn", label + "中", "请稍候，正在调用本地动作服务。");
     fetch(ingressUrl("action/" + action), {
       method: "POST",
       cache: "no-cache"
@@ -775,17 +1000,16 @@ openclaw devices approve &lt;requestId&gt;</pre>
         var data = result.data || {};
         var output = data.stdout || data.stderr || "";
         if (!result.ok || !data.ok) {
-          fb.innerHTML = "<b>" + escapeHtml(label) + "失败。</b><br><pre>" + escapeHtml(output || "无输出") + "</pre>";
+          setActionFeedback("err", label + "失败", "请检查下方输出。", output || "无输出");
           return;
         }
-        fb.innerHTML = "<b>" + escapeHtml(label) + "完成。</b>" +
-          (output ? "<br><pre>" + escapeHtml(output) + "</pre>" : "");
+        setActionFeedback("ok", label + "完成", "命令执行成功。", output || "");
         if (action === "restart") {
           setTimeout(checkGateway, 1500);
         }
       })
       .catch(function () {
-        fb.textContent = label + "失败：无法访问本地动作服务。";
+        setActionFeedback("err", label + "失败", "无法访问本地动作服务。");
       });
   }
 
@@ -798,8 +1022,7 @@ openclaw devices approve &lt;requestId&gt;</pre>
   });
 
   $("checkUpdateBtn").addEventListener("click", function () {
-    var fb = $("actionFeedback");
-    fb.textContent = "正在检查 npm 仓库...";
+    setActionFeedback("warn", "检查 npm 版本中", "正在连接 npm 仓库。");
     fetch("https://registry.npmjs.org/openclaw/latest", { cache: "no-cache" })
       .then(function (r) {
         if (!r.ok) { throw new Error("npm"); }
@@ -807,13 +1030,13 @@ openclaw devices approve &lt;requestId&gt;</pre>
       })
       .then(function (d) {
         if (d.version && d.version !== OC_VER) {
-          fb.innerHTML = "npm 最新版本：<b>" + d.version + "</b>（当前：" + OC_VER + "）。";
+          setActionFeedback("warn", "发现新版本", "npm 最新版本为 " + d.version + "，当前内置版本为 " + OC_VER + "。");
         } else {
-          fb.textContent = "当前内置版本已是最新：" + OC_VER + "。";
+          setActionFeedback("ok", "版本已是最新", "当前内置版本已是最新：" + OC_VER + "。");
         }
       })
       .catch(function () {
-        fb.textContent = "当前无法连接到 npm。";
+        setActionFeedback("err", "检查失败", "当前无法连接到 npm。");
       });
   });
 
