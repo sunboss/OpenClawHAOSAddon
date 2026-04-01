@@ -3,6 +3,17 @@
 This project is now treated as a fresh baseline.
 Historical update records were intentionally removed.
 
+## [2026.04.01.7] - 2026-04-01
+
+### Changed
+- Bundle `mcporter` inside the add-on image so Home Assistant MCP can work as a native, always-available runtime instead of showing a missing-tool placeholder.
+- Persist MCPorter state under `/config/.mcporter` so Home Assistant MCP registrations survive add-on rebuilds and restarts.
+- Add terminal shortcut buttons for `mcporter list HA` and viewing the active MCP config directly from the HAOS landing page.
+- Rename the MCP startup toggle to `Enable Native Home Assistant MCP` to reflect that it targets Home Assistant's built-in `/api/mcp` endpoint.
+
+### Fixed
+- Rework startup MCP registration to use the persistent MCPorter config under `/config`, verify the registered `HA` server after writing it, and log a clearer failure path when Home Assistant's MCP endpoint is unavailable.
+
 ## [2026.04.01.6] - 2026-04-01
 
 ### Changed

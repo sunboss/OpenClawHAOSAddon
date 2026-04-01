@@ -1,5 +1,5 @@
 name: OpenClaw HAOS Add-on
-version: "2026.04.01.6"
+version: "2026.04.01.7"
 slug: openclaw_assistant
 description: Run OpenClaw inside Home Assistant OS as a dedicated HAOS add-on.
 url: https://github.com/sunboss/OpenClawHAOSAddon
@@ -41,9 +41,10 @@ options:
   # Optional: Home Assistant long-lived token (for local HA API scripts/tools)
   homeassistant_token: ""
 
-  # Enable Home Assistant MCP registration at startup.
-  # When enabled and homeassistant_token is set, the add-on will try to
-  # register Home Assistant as an MCP server for OpenClaw during startup.
+  # Enable native Home Assistant MCP registration at startup.
+  # When enabled and homeassistant_token is set, the add-on will register
+  # Home Assistant's built-in /api/mcp endpoint in mcporter during startup.
+  # Requires a Home Assistant version that exposes the native MCP endpoint.
   auto_configure_mcp: true
 
   # Automatically approve pending local device pairing requests.

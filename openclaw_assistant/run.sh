@@ -179,6 +179,8 @@ export HOME=/config
 export OPENCLAW_CONFIG_DIR=/config/.openclaw
 export OPENCLAW_WORKSPACE_DIR=/config/.openclaw/workspace
 export XDG_CONFIG_HOME=/config
+export MCPORTER_HOME_DIR=/config/.mcporter
+export MCPORTER_CONFIG="${MCPORTER_HOME_DIR}/mcporter.json"
 
 mkdir -p \
   /config/.openclaw \
@@ -187,8 +189,28 @@ mkdir -p \
   /config/.openclaw/workspace/memory \
   /config/.openclaw/agents/main/sessions \
   /config/.openclaw/agents/main/agent \
+  /config/.mcporter \
   /config/keys \
   /config/secrets
+
+ensure_mcporter_config() {
+  mkdir -p "$MCPORTER_HOME_DIR"
+  if [ ! -f "$MCPORTER_CONFIG" ]; then
+    cat >"$MCPORTER_CONFIG" <<'EOF'
+{
+  "mcpServers": {},
+  "imports": []
+}
+EOF
+  fi
+  chmod 700 "$MCPORTER_HOME_DIR" 2>/dev/null || true
+  chmod 600 "$MCPORTER_CONFIG" 2>/dev/null || true
+}
+
+mcporter_cmd() {
+  ensure_mcporter_config
+  HOME=/config MCPORTER_CONFIG="$MCPORTER_CONFIG" mcporter "$@"
+}
 
 ensure_openclaw_fs_permissions() {
   # Keep the OpenClaw state directory private because it can contain tokens,
@@ -205,6 +227,7 @@ ensure_openclaw_fs_permissions() {
 }
 
 ensure_openclaw_fs_permissions
+ensure_mcporter_config
 
 # ------------------------------------------------------------------------------
 # Sync built-in OpenClaw skills from image to persistent storage
@@ -905,39 +928,43 @@ if [ -f /usr/local/lib/openclaw-proxy-shim.cjs ]; then
 fi
 
 # ------------------------------------------------------------------------------
-# Auto-configure MCP (Model Context Protocol) for Home Assistant
-# Registers HA as an MCP server so OpenClaw can control HA entities/services.
+# Auto-configure MCP (Model Context Protocol) for Home Assistant.
+# Home Assistant exposes a native MCP endpoint at /api/mcp on supported versions.
+# We persist the registration under /config/.mcporter so it survives add-on rebuilds.
 # Requires: homeassistant_token set in add-on options + mcporter CLI available.
-# Runs once; re-runs when the token changes.
-# Auto-detects HA API URL: supervisor proxy if available, else localhost:8123.
+# Runs once; re-runs when the token changes or URL changes.
 # ------------------------------------------------------------------------------
 if [ "$AUTO_CONFIGURE_MCP" = "true" ] && [ -n "$HA_TOKEN" ]; then
   if command -v mcporter >/dev/null 2>&1; then
-    # Detect HA API URL: prefer supervisor proxy (works in all add-on network modes),
-    # fall back to localhost:8123 (works with host_network: true).
     if [ -n "${SUPERVISOR_TOKEN:-}" ]; then
       MCP_HA_URL="http://supervisor/core/api/mcp"
     else
       MCP_HA_URL="http://localhost:8123/api/mcp"
     fi
     MCP_FLAG="/config/.openclaw/.mcp_ha_configured"
-    MCP_TOKEN_HASH=$(printf '%s' "$HA_TOKEN" | sha256sum | cut -d' ' -f1)
+    MCP_STATE_HASH=$(printf '%s|%s' "$HA_TOKEN" "$MCP_HA_URL" | sha256sum | cut -d' ' -f1)
 
-    if [ -f "$MCP_FLAG" ] && [ "$(cat "$MCP_FLAG" 2>/dev/null)" = "$MCP_TOKEN_HASH" ]; then
+    if [ -f "$MCP_FLAG" ] && [ "$(cat "$MCP_FLAG" 2>/dev/null)" = "$MCP_STATE_HASH" ]; then
       echo "INFO: MCP Home Assistant server already configured (token unchanged)"
     else
       echo "INFO: Configuring MCP for Home Assistant at $MCP_HA_URL ..."
-      # Remove stale entry if present (token may have changed)
-      mcporter config remove HA 2>/dev/null || true
+      # Remove stale entry if present (token or URL may have changed).
+      mcporter_cmd config remove HA >/dev/null 2>&1 || true
 
-      if mcporter config add HA "$MCP_HA_URL" \
-          --header "Authorization=Bearer $HA_TOKEN" \
-          --scope home 2>&1; then
-        printf '%s' "$MCP_TOKEN_HASH" > "$MCP_FLAG"
-        echo "INFO: MCP server 'HA' registered  - OpenClaw can now control Home Assistant"
+      if mcporter_cmd config add HA "$MCP_HA_URL" \
+          --header "Authorization=Bearer $HA_TOKEN" 2>&1; then
+        echo "INFO: MCP server 'HA' registered in $MCPORTER_CONFIG"
+        if mcporter_cmd list HA --json >/dev/null 2>&1; then
+          printf '%s' "$MCP_STATE_HASH" > "$MCP_FLAG"
+          echo "INFO: MCP server 'HA' verified  - OpenClaw can now use Home Assistant as a native MCP server"
+        else
+          rm -f "$MCP_FLAG"
+          echo "WARN: MCP server 'HA' was registered but could not be verified immediately."
+          echo "WARN: Check Home Assistant version/support and try: mcporter list HA"
+        fi
       else
         echo "WARN: MCP auto-configuration failed. Configure manually in the terminal:"
-        echo "WARN:   mcporter config add HA \"$MCP_HA_URL\" --header \"Authorization=Bearer YOUR_TOKEN\" --scope home"
+        echo "WARN:   MCPORTER_CONFIG=$MCPORTER_CONFIG mcporter config add HA \"$MCP_HA_URL\" --header \"Authorization=Bearer YOUR_TOKEN\""
       fi
     fi
   else
@@ -1286,6 +1313,8 @@ GW_PUBLIC_URL="$GW_PUBLIC_URL" TERMINAL_PORT="$TERMINAL_PORT" \
       echo 'needs-token'
     elif ! command -v mcporter >/dev/null 2>&1; then
       echo 'mcporter-missing'
+    elif [ -f "$MCPORTER_CONFIG" ] && jq -e '.mcpServers.HA' "$MCPORTER_CONFIG" >/dev/null 2>&1; then
+      echo 'configured'
     else
       echo ''
     fi

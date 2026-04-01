@@ -52,6 +52,11 @@ RUN node -v | grep -E '^v24\.' || (echo "ERROR: Expected Node.js v24, got $(node
 # Install pnpm globally (required by some OpenClaw skills like clawhub)
 RUN npm install -g pnpm && pnpm -v
 
+# Install MCPorter globally so the add-on can register native MCP servers
+# (for example Home Assistant's built-in /api/mcp endpoint) during startup.
+RUN npm install -g mcporter \
+    && mcporter --version
+
 # Install Homebrew (Linuxbrew) for OpenClaw skill dependencies
 # Homebrew is optional - some skills need CLI tools like gemini, aider, etc.
 # NOTE: Homebrew requires CPU with SSSE3 support (Intel Core 2 or newer, ~2006+)

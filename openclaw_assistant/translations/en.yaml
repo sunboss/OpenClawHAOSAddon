@@ -15,8 +15,8 @@ configuration:
     name: Home Assistant Token
     description: Optional long-lived Home Assistant token for MCP setup or local HA API use.
   auto_configure_mcp:
-    name: Enable Home Assistant MCP
-    description: Enable MCP registration for Home Assistant during add-on startup when a Home Assistant token is set.
+    name: Enable Native Home Assistant MCP
+    description: Register Home Assistant's built-in MCP endpoint during add-on startup when a Home Assistant token is set.
   auto_approve_device_pairing:
     name: Auto-Approve Device Pairing
     description: Automatically approve pending local device pairing requests during add-on startup.

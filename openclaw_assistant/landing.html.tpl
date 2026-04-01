@@ -497,15 +497,17 @@
       <button class="btn" data-term-cmd="openclaw doctor --fix">doctor --fix</button>
     </div>
     <div class="section-subtitle">诊断与维护</div>
-    <div class="btn-grid">
-      <button class="btn" data-term-cmd="openclaw health --json">health --json</button>
-      <button class="btn" data-term-cmd="openclaw status --deep">status --deep</button>
-      <button class="btn" data-term-cmd="openclaw logs --follow">logs --follow</button>
-      <button class="btn" data-term-cmd="tail -f /tmp/openclaw/openclaw-$(date +%F).log">tail gateway log</button>
-      <button class="btn" data-term-cmd="openclaw security audit --deep">security audit</button>
-      <button class="btn" data-term-cmd="openclaw memory status --deep">memory status</button>
-      <button class="btn" data-term-cmd="jq -r '.gateway.auth.token' /config/.openclaw/openclaw.json">read token</button>
-    </div>
+      <div class="btn-grid">
+        <button class="btn" data-term-cmd="openclaw health --json">health --json</button>
+        <button class="btn" data-term-cmd="openclaw status --deep">status --deep</button>
+        <button class="btn" data-term-cmd="openclaw logs --follow">logs --follow</button>
+        <button class="btn" data-term-cmd="tail -f /tmp/openclaw/openclaw-$(date +%F).log">tail gateway log</button>
+        <button class="btn" data-term-cmd="mcporter list HA">mcp list</button>
+        <button class="btn" data-term-cmd="cat /config/.mcporter/mcporter.json">mcp config</button>
+        <button class="btn" data-term-cmd="openclaw security audit --deep">security audit</button>
+        <button class="btn" data-term-cmd="openclaw memory status --deep">memory status</button>
+        <button class="btn" data-term-cmd="jq -r '.gateway.auth.token' /config/.openclaw/openclaw.json">read token</button>
+      </div>
     <div class="hero-sub" style="margin-top:8px">
       点击后会把命令填入下方终端，不会自动执行；按回车即可运行。
     </div>
@@ -820,6 +822,31 @@ openclaw devices approve &lt;requestId&gt;</pre>
   $("gatewayModeText").textContent = GATEWAY_MODE_LABELS[GATEWAY_MODE] || GATEWAY_MODE;
   $("gatewayModeText").title = GATEWAY_MODE;
 
+  function normalizePidRow() {
+    var rows = document.querySelectorAll(".kv");
+    rows.forEach(function (row) {
+      var badges = row.querySelectorAll(".badge");
+      if (badges.length !== 4) { return; }
+      if (!/^nginx\s+/i.test(badges[1].textContent.trim())) { return; }
+      if (!/^ttyd\s+/i.test(badges[2].textContent.trim())) { return; }
+
+      var key = row.querySelector(".kv-key");
+      if (key) { key.textContent = "PID"; }
+
+      var gwPid = badges[0].textContent.trim().split(/\s+/).pop();
+      var nginxPid = badges[1].textContent.trim().split(/\s+/).pop();
+      var ttydPid = badges[2].textContent.trim().split(/\s+/).pop();
+      var actionPid = badges[3].textContent.trim().split(/\s+/).pop();
+
+      badges[0].textContent = "Gateway " + gwPid;
+      badges[1].textContent = "nginx " + nginxPid;
+      badges[2].textContent = "ttyd " + ttydPid;
+      badges[3].textContent = "Action " + actionPid;
+    });
+  }
+
+  normalizePidRow();
+
   if (ACCESS_MODE === "lan_https" && HTTPS_PORT) {
     var certBtn = $("certBtn");
     certBtn.href = "https://" + location.hostname + ":" + HTTPS_PORT + "/cert/ca.crt";
@@ -829,9 +856,13 @@ openclaw devices approve &lt;requestId&gt;</pre>
   var mcpEl = $("diagMcp");
   if (mcpEl) {
     var st = mcpEl.textContent.trim().toLowerCase();
-    if (st === "registered" || st === "enabled" || st === "configured") {
+    if (st === "registered" || st === "enabled") {
       mcpEl.textContent = "已注册";
       mcpEl.className = "diag-ok";
+    } else if (st === "configured") {
+      mcpEl.textContent = "MCP configured";
+      mcpEl.className = "diag-warn";
+      mcpEl.title = "mcporter config exists, but startup verification has not completed yet.";
     } else if (st === "disabled") {
       mcpEl.textContent = "已关闭";
       mcpEl.className = "diag-muted";
