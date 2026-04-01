@@ -1,5 +1,7 @@
 # OpenClaw HAOS Add-on Documentation
 
+> Attribution: this project is based on [techartdev/OpenClawHomeAssistant](https://github.com/techartdev/OpenClawHomeAssistant), was initially modified with Anthropic Claude Opus 4.6, and is now maintained through OpenAI Codex (GPT-5.4).
+
 This add-on runs [OpenClaw](https://github.com/openclaw/openclaw) inside Home Assistant OS (HAOS). It provides a fully self-contained environment with a web terminal, gateway server, and the tools OpenClaw needs without manual Docker setup.
 
 **Table of Contents**

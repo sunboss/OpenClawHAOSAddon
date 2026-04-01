@@ -1,5 +1,7 @@
 # OpenClaw HAOS Add-on
 
+> Attribution: this project is based on [techartdev/OpenClawHomeAssistant](https://github.com/techartdev/OpenClawHomeAssistant), was initially modified with Anthropic Claude Opus 4.6, and is now maintained through OpenAI Codex (GPT-5.4).
+
 This repository contains the maintained Home Assistant OS add-on project under `sunboss`.
 It runs OpenClaw inside HAOS with an ingress control page, embedded terminal, and persistent workspace/config storage.
 

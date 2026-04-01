@@ -58,6 +58,7 @@ FORCE_IPV4_DNS=$(jq -r '.force_ipv4_dns // true' "$OPTIONS_FILE")
 ACCESS_MODE=$(jq -r '.access_mode // "custom"' "$OPTIONS_FILE")
 NGINX_LOG_LEVEL=$(jq -r '.nginx_log_level // "minimal"' "$OPTIONS_FILE")
 AUTO_CONFIGURE_MCP=$(jq -r '.auto_configure_mcp // false' "$OPTIONS_FILE")
+AUTO_APPROVE_DEVICE_PAIRING=$(jq -r '.auto_approve_device_pairing // true' "$OPTIONS_FILE")
 SANDBOX_MODE=$(jq -r '.sandbox_mode // "off"' "$OPTIONS_FILE")
 GW_ENV_VARS_TYPE=$(jq -r 'if .gateway_env_vars == null then "null" else (.gateway_env_vars | type) end' "$OPTIONS_FILE")
 GW_ENV_VARS_RAW=$(jq -r '.gateway_env_vars // empty' "$OPTIONS_FILE")
@@ -76,6 +77,7 @@ export TZ="$TZNAME"
 # ------------------------------------------------------------------------------
 ENABLE_HTTPS_PROXY=false
 GATEWAY_INTERNAL_PORT="$GATEWAY_PORT"
+EFFECTIVE_GATEWAY_TRUSTED_PROXIES="$GATEWAY_TRUSTED_PROXIES"
 
 case "$ACCESS_MODE" in
   local_only)
@@ -89,7 +91,13 @@ case "$ACCESS_MODE" in
     GATEWAY_AUTH_MODE="token"
     ENABLE_HTTPS_PROXY=true
     GATEWAY_INTERNAL_PORT=$((GATEWAY_PORT + 1))
+    if [ -n "$EFFECTIVE_GATEWAY_TRUSTED_PROXIES" ]; then
+      EFFECTIVE_GATEWAY_TRUSTED_PROXIES="${EFFECTIVE_GATEWAY_TRUSTED_PROXIES},127.0.0.1/32,::1/128"
+    else
+      EFFECTIVE_GATEWAY_TRUSTED_PROXIES="127.0.0.1/32,::1/128"
+    fi
     echo "INFO: Access mode: lan_https (built-in HTTPS proxy on 0.0.0.0:${GATEWAY_PORT})"
+    echo "INFO: Auto-trusting loopback proxy headers for lan_https (${EFFECTIVE_GATEWAY_TRUSTED_PROXIES})"
     ;;
   lan_reverse_proxy)
     GATEWAY_BIND_MODE="lan"
@@ -172,7 +180,15 @@ export OPENCLAW_CONFIG_DIR=/config/.openclaw
 export OPENCLAW_WORKSPACE_DIR=/config/.openclaw/workspace
 export XDG_CONFIG_HOME=/config
 
-mkdir -p /config/.openclaw /config/.openclaw/identity /config/.openclaw/workspace /config/.openclaw/workspace/memory /config/keys /config/secrets
+mkdir -p \
+  /config/.openclaw \
+  /config/.openclaw/identity \
+  /config/.openclaw/workspace \
+  /config/.openclaw/workspace/memory \
+  /config/.openclaw/agents/main/sessions \
+  /config/.openclaw/agents/main/agent \
+  /config/keys \
+  /config/secrets
 
 ensure_openclaw_fs_permissions() {
   # Keep the OpenClaw state directory private because it can contain tokens,
@@ -181,6 +197,10 @@ ensure_openclaw_fs_permissions() {
   [ -d /config/.openclaw/identity ] && chmod 700 /config/.openclaw/identity 2>/dev/null || true
   [ -d /config/.openclaw/workspace ] && chmod 700 /config/.openclaw/workspace 2>/dev/null || true
   [ -d /config/.openclaw/workspace/memory ] && chmod 700 /config/.openclaw/workspace/memory 2>/dev/null || true
+  [ -d /config/.openclaw/agents ] && chmod 700 /config/.openclaw/agents 2>/dev/null || true
+  [ -d /config/.openclaw/agents/main ] && chmod 700 /config/.openclaw/agents/main 2>/dev/null || true
+  [ -d /config/.openclaw/agents/main/sessions ] && chmod 700 /config/.openclaw/agents/main/sessions 2>/dev/null || true
+  [ -d /config/.openclaw/agents/main/agent ] && chmod 700 /config/.openclaw/agents/main/agent 2>/dev/null || true
   [ -f /config/.openclaw/openclaw.json ] && chmod 600 /config/.openclaw/openclaw.json 2>/dev/null || true
 }
 
@@ -509,6 +529,7 @@ GW_RELAY_PID=""
 NGINX_PID=""
 TTYD_PID=""
 ACTION_PID=""
+PAIRING_HELPER_PID=""
 SHUTTING_DOWN="false"
 
 shutdown() {
@@ -528,6 +549,11 @@ shutdown() {
   if [ -n "${ACTION_PID}" ] && kill -0 "${ACTION_PID}" >/dev/null 2>&1; then
     kill -TERM "${ACTION_PID}" >/dev/null 2>&1 || true
     wait "${ACTION_PID}" || true
+  fi
+
+  if [ -n "${PAIRING_HELPER_PID}" ] && kill -0 "${PAIRING_HELPER_PID}" >/dev/null 2>&1; then
+    kill -TERM "${PAIRING_HELPER_PID}" >/dev/null 2>&1 || true
+    wait "${PAIRING_HELPER_PID}" || true
   fi
 
   if [ -n "${GW_PID}" ] && kill -0 "${GW_PID}" >/dev/null 2>&1; then
@@ -596,11 +622,30 @@ print("INFO: Wrote minimal OpenClaw config (gateway.mode=local, auth.token gener
 PY
   ensure_openclaw_fs_permissions
 
-  # Run non-interactive onboard to register workspace and skill paths.
-  # --no-install-daemon: container lifecycle is managed by the add-on supervisor, not systemd/launchd.
-  # --mode local:        force local gateway (not remote).
+  # Run the official non-interactive onboarding flow once so the image layout,
+  # workspace paths, and per-agent state directories match upstream defaults.
   echo "INFO: Running non-interactive onboard (container mode)..."
-  if ! openclaw onboard --no-install-daemon --mode local 2>&1; then
+  BOOTSTRAP_GATEWAY_TOKEN="$(jq -r '.gateway.auth.token // empty' "$OPENCLAW_CONFIG_PATH" 2>/dev/null || true)"
+  onboard_args=(
+    openclaw onboard
+    --non-interactive
+    --accept-risk
+    --mode local
+    --auth-choice skip
+    --workspace "$OPENCLAW_WORKSPACE_DIR"
+    --gateway-bind loopback
+    --gateway-port 18789
+    --gateway-auth token
+    --no-install-daemon
+    --skip-channels
+    --skip-skills
+    --skip-health
+    --skip-ui
+  )
+  if [ -n "$BOOTSTRAP_GATEWAY_TOKEN" ]; then
+    onboard_args+=(--gateway-token "$BOOTSTRAP_GATEWAY_TOKEN")
+  fi
+  if ! "${onboard_args[@]}" 2>&1; then
     echo "WARN: openclaw onboard exited non-zero during first boot."
     echo "WARN: Basic config exists, but provider/workspace initialization may be incomplete."
   fi
@@ -647,7 +692,7 @@ if [ -f "$OPENCLAW_CONFIG_PATH" ]; then
   if [ -f "$HELPER_PATH" ]; then
     # In lan_https mode the gateway uses an internal port; nginx owns the external one.
     EFFECTIVE_GW_PORT="$GATEWAY_INTERNAL_PORT"
-    if ! python3 "$HELPER_PATH" apply-gateway-settings "$GATEWAY_MODE" "$GATEWAY_REMOTE_URL" "$GATEWAY_BIND_MODE" "$EFFECTIVE_GW_PORT" "$ENABLE_OPENAI_API" "$GATEWAY_AUTH_MODE" "$GATEWAY_TRUSTED_PROXIES"; then
+    if ! python3 "$HELPER_PATH" apply-gateway-settings "$GATEWAY_MODE" "$GATEWAY_REMOTE_URL" "$GATEWAY_BIND_MODE" "$EFFECTIVE_GW_PORT" "$ENABLE_OPENAI_API" "$GATEWAY_AUTH_MODE" "$EFFECTIVE_GATEWAY_TRUSTED_PROXIES"; then
       rc=$?
       echo "ERROR: Failed to apply gateway settings via oc_config_helper.py (exit code ${rc})."
       echo "ERROR: Gateway configuration may be incorrect; aborting startup."
@@ -896,7 +941,8 @@ if [ "$AUTO_CONFIGURE_MCP" = "true" ] && [ -n "$HA_TOKEN" ]; then
       fi
     fi
   else
-    echo "INFO: mcporter not available; skipping MCP auto-configuration (run 'openclaw onboard' first)"
+    echo "INFO: mcporter is not bundled in the current image; skipping MCP auto-configuration"
+    echo "INFO: If you need MCP right now, install or provide mcporter and rerun manual registration from the terminal"
   fi
 elif [ "$AUTO_CONFIGURE_MCP" = "true" ] && [ -z "$HA_TOKEN" ]; then
   echo "INFO: MCP auto-configure enabled but homeassistant_token not set  - skipping"
@@ -994,6 +1040,40 @@ stop_gw_relay() {
   fi
 }
 
+start_pairing_auto_approver() {
+  if [ "$AUTO_APPROVE_DEVICE_PAIRING" != "true" ] && [ "$AUTO_APPROVE_DEVICE_PAIRING" != "1" ]; then
+    return 0
+  fi
+  if [ "$GATEWAY_MODE" = "remote" ]; then
+    echo "INFO: Auto-approve device pairing is skipped in remote gateway mode"
+    return 0
+  fi
+
+  (
+    sleep 20
+    while true; do
+      sleep 6
+      if [ "$SHUTTING_DOWN" = "true" ]; then
+        exit 0
+      fi
+      if ! command -v openclaw >/dev/null 2>&1; then
+        continue
+      fi
+      if ! kill -0 "${GW_PID:-0}" >/dev/null 2>&1; then
+        continue
+      fi
+      if openclaw devices approve --latest >/tmp/openclaw-auto-approve.log 2>&1; then
+        approved_line="$(grep -m1 '^Approved ' /tmp/openclaw-auto-approve.log 2>/dev/null || true)"
+        if [ -n "$approved_line" ]; then
+          echo "INFO: Auto-approved device pairing: ${approved_line#Approved }"
+        fi
+      fi
+    done
+  ) &
+  PAIRING_HELPER_PID=$!
+  echo "INFO: Auto-approve pairing helper started (PID ${PAIRING_HELPER_PID})"
+}
+
 # Find a running gateway daemon's PID using multiple detection methods.
 # Used by the supervisor loop to detect self-restarts (SIGUSR1) without
 # spawning duplicate gateway instances that collide on the port.
@@ -1046,6 +1126,7 @@ if ! start_openclaw_runtime; then
 fi
 
 start_gw_relay
+start_pairing_auto_approver
 
 # Run openclaw doctor in the background after gateway starts.
 # Surfaces misconfiguration warnings (DM policy risks, missing settings, etc.)
@@ -1196,7 +1277,23 @@ GW_PUBLIC_URL="$GW_PUBLIC_URL" TERMINAL_PORT="$TERMINAL_PORT" \
   OPENCLAW_VERSION="$(openclaw --version 2>/dev/null | sed -nE 's/.*([0-9]{4}\.[0-9]{1,2}\.[0-9]{1,2}).*/\1/p' | head -1 || echo '-')" \
   NODE_VERSION="$(node --version 2>/dev/null || echo '-')" \
   ADDON_VERSION="$(grep -E '^version:' /etc/openclaw-addon-config.yaml 2>/dev/null | head -1 | sed -E 's/version:\s*\"?([^\"[:space:]]+)\"?/\1/' || echo '-')" \
-  MCP_STATUS="$([ -f /config/.openclaw/.mcp_ha_configured ] && echo 'registered' || echo '')" \
+  MCP_STATUS="$(
+    if [ -f /config/.openclaw/.mcp_ha_configured ]; then
+      echo 'registered'
+    elif [ "$AUTO_CONFIGURE_MCP" != "true" ]; then
+      echo 'disabled'
+    elif [ -z "$HA_TOKEN" ]; then
+      echo 'needs-token'
+    elif ! command -v mcporter >/dev/null 2>&1; then
+      echo 'mcporter-missing'
+    else
+      echo ''
+    fi
+  )" \
+  GW_PID="${GW_PID:-}" \
+  NGINX_PID="${NGINX_PID:-}" \
+  TTYD_PID="${TTYD_PID:-}" \
+  ACTION_PID="${ACTION_PID:-}" \
   GATEWAY_TOKEN_AVAILABLE="$([ -n "$GATEWAY_TOKEN_VALUE" ] && echo 'true' || echo 'false')" \
   NGINX_LOG_LEVEL="$NGINX_LOG_LEVEL" \
   python3 /render_nginx.py

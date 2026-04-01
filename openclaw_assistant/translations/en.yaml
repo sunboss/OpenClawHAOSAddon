@@ -14,6 +14,12 @@ configuration:
   homeassistant_token:
     name: Home Assistant Token
     description: Optional long-lived Home Assistant token for MCP setup or local HA API use.
+  auto_configure_mcp:
+    name: Enable Home Assistant MCP
+    description: Enable MCP registration for Home Assistant during add-on startup when a Home Assistant token is set.
+  auto_approve_device_pairing:
+    name: Auto-Approve Device Pairing
+    description: Automatically approve pending local device pairing requests during add-on startup.
   http_proxy:
     name: Outbound HTTP Proxy
     description: Optional proxy URL for outbound HTTP and HTTPS requests, for example http://192.168.2.1:3128.
@@ -87,9 +93,6 @@ configuration:
   gateway_env_vars:
     name: Gateway Environment Variables
     description: Extra environment variables passed to the gateway at startup as name/value entries.
-  auto_configure_mcp:
-    name: Auto-Configure MCP
-    description: Automatically register Home Assistant as an MCP server when a Home Assistant token is set.
   telegram_bot_token:
     name: Telegram Bot Token
     description: Optional Telegram bot token to inject into openclaw.json on startup.

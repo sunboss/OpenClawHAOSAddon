@@ -455,6 +455,15 @@
           <span class="badge badge-gray">终端 __TERMINAL_PORT__</span>
         </span>
       </div>
+      <div class="kv">
+        <span class="kv-key">进程 PID</span>
+        <span class="kv-val">
+          <span class="badge badge-blue">网关 __GW_PID__</span>
+          <span class="badge badge-gray">nginx __NGINX_PID__</span>
+          <span class="badge badge-gray">ttyd __TTYD_PID__</span>
+          <span class="badge badge-gray">动作 __ACTION_PID__</span>
+        </span>
+      </div>
     </div>
   </div>
 
@@ -556,6 +565,9 @@ openclaw devices approve &lt;requestId&gt;</pre>
         <li>启用 <code>auto_configure_mcp</code>。</li>
         <li>重启插件。</li>
       </ol>
+      <div class="hero-sub" style="margin:8px 0 10px">
+        当前镜像如果没有内置 <code>mcporter</code>，页面会明确提示“缺少 mcporter”，这时需要等后续镜像补齐，或在终端里手动提供该工具后再注册。
+      </div>
       <b>手动配置</b>
       <pre>mcporter config add HA "http://localhost:8123/api/mcp" \
   --header "Authorization=Bearer YOUR_TOKEN" \
@@ -820,6 +832,17 @@ openclaw devices approve &lt;requestId&gt;</pre>
     if (st === "registered" || st === "enabled" || st === "configured") {
       mcpEl.textContent = "已注册";
       mcpEl.className = "diag-ok";
+    } else if (st === "disabled") {
+      mcpEl.textContent = "已关闭";
+      mcpEl.className = "diag-muted";
+    } else if (st === "needs-token") {
+      mcpEl.textContent = "缺少令牌";
+      mcpEl.className = "diag-warn";
+      mcpEl.title = "已启用 auto_configure_mcp，但还没有填写 homeassistant_token。";
+    } else if (st === "mcporter-missing") {
+      mcpEl.textContent = "缺少 mcporter";
+      mcpEl.className = "diag-warn";
+      mcpEl.title = "当前镜像里没有 mcporter，因此无法自动注册 Home Assistant MCP。";
     } else if (!st) {
       mcpEl.textContent = "未配置";
       mcpEl.className = "diag-muted";

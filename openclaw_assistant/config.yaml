@@ -1,5 +1,5 @@
 name: OpenClaw HAOS Add-on
-version: "2026.04.01.5"
+version: "2026.04.01.6"
 slug: openclaw_assistant
 description: Run OpenClaw inside Home Assistant OS as a dedicated HAOS add-on.
 url: https://github.com/sunboss/OpenClawHAOSAddon
@@ -40,6 +40,15 @@ options:
 
   # Optional: Home Assistant long-lived token (for local HA API scripts/tools)
   homeassistant_token: ""
+
+  # Enable Home Assistant MCP registration at startup.
+  # When enabled and homeassistant_token is set, the add-on will try to
+  # register Home Assistant as an MCP server for OpenClaw during startup.
+  auto_configure_mcp: true
+
+  # Automatically approve pending local device pairing requests.
+  # Recommended for personal HAOS installs where you are the only operator.
+  auto_approve_device_pairing: true
 
   # Optional: outbound HTTP/HTTPS proxy for OpenClaw network access.
   # Example: "http://192.168.2.1:3128"
@@ -132,11 +141,6 @@ options:
   # Limits: max 50 variables, max key length 255 chars, max value length 10000 chars
   gateway_env_vars: []
 
-  # Auto-configure MCP (Model Context Protocol) for Home Assistant.
-  # When enabled and homeassistant_token is set, automatically registers HA as an
-  # MCP server in OpenClaw so the AI can control Home Assistant entities/services.
-  auto_configure_mcp: true
-
   # Channel tokens (optional convenience fields)
   # Set these to auto-inject tokens into openclaw.json on startup.
   # Equivalent to running: openclaw channels add --channel telegram --token "..."
@@ -169,6 +173,8 @@ schema:
   terminal_port: int(1024,65535)?
   gateway_public_url: str?
   homeassistant_token: str?
+  auto_configure_mcp: bool?
+  auto_approve_device_pairing: bool?
   http_proxy: str?
 
   router_ssh_host: str
@@ -191,7 +197,6 @@ schema:
     - name: "match(^[A-Z_][A-Z0-9_]*$)"
       value: str
   nginx_log_level: list(full|minimal)?
-  auto_configure_mcp: bool?
   telegram_bot_token: str?
   discord_bot_token: str?
   slack_bot_token: str?

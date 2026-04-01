@@ -3,6 +3,20 @@
 This project is now treated as a fresh baseline.
 Historical update records were intentionally removed.
 
+## [2026.04.01.6] - 2026-04-01
+
+### Changed
+- Switch first-boot onboarding to the official `openclaw onboard --non-interactive` flow with explicit local-gateway defaults, so fresh installs stop printing the interactive QuickStart wizard during add-on startup.
+- Improve MCP diagnostics so the landing page distinguishes between disabled MCP, missing Home Assistant token, and missing `mcporter` tooling.
+- Move the Home Assistant MCP startup toggle next to the Home Assistant token field in the add-on configuration UI and rename it to a clearer `Enable Home Assistant MCP`.
+- Show live process PID badges for the OpenClaw gateway, nginx, ttyd, and local action server in the HAOS landing page.
+- Add an `Auto-Approve Device Pairing` startup toggle for personal HAOS installs so pending local Control UI pairing requests can be approved automatically in the background.
+
+### Fixed
+- Auto-trust the built-in loopback HTTPS proxy in `lan_https` mode by adding `127.0.0.1/32` and `::1/128` to `gateway.trustedProxies`, which removes the remaining proxy-header warning from `openclaw security audit`.
+- Pre-create `/config/.openclaw/agents/main/sessions` and related agent directories so first-boot doctor checks no longer complain that the session store is missing before the gateway finishes initializing.
+- Replace the misleading `run 'openclaw onboard' first` MCP log with a direct message that the current image does not bundle `mcporter`.
+
 ## [2026.04.01.5] - 2026-04-01
 
 ### Changed

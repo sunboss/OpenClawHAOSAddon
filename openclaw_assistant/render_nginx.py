@@ -47,6 +47,10 @@ def main() -> None:
     addon_version = env("ADDON_VERSION", "-")
     mcp_status = env("MCP_STATUS", "")
     token_available = env("GATEWAY_TOKEN_AVAILABLE", "false")
+    gw_pid = env("GW_PID", "-")
+    nginx_pid = env("NGINX_PID", "-")
+    ttyd_pid = env("TTYD_PID", "-")
+    action_pid = env("ACTION_PID", "-")
 
     gw_path = "" if public_url.endswith("/") else "/"
 
@@ -127,6 +131,10 @@ def main() -> None:
         "__NODE_VERSION__": html.escape(node_version),
         "__ADDON_VERSION__": html.escape(addon_version),
         "__MCP_STATUS__": html.escape(mcp_status),
+        "__GW_PID__": html.escape(gw_pid),
+        "__NGINX_PID__": html.escape(nginx_pid),
+        "__TTYD_PID__": html.escape(ttyd_pid),
+        "__ACTION_PID__": html.escape(action_pid),
         "__TERMINAL_PORT__": html.escape(terminal_port),
         "__GATEWAY_PORT__": html.escape(gateway_port),
         "__HTTPS_PORT__": html.escape(https_port if enable_https else ""),
