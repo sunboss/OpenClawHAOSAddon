@@ -1,9 +1,9 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>OpenClaw HAOS 插件</title>
+  <title>OpenClaw HAOS 鎻掍欢</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -46,7 +46,20 @@
     }
     a, button { font: inherit; }
     h2 { font-size: 20px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
-    .page { max-width: 920px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+    .page { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.18fr) minmax(340px, 0.82fr);
+      gap: 14px;
+      align-items: start;
+    }
+    .main-column,
+    .side-column {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-width: 0;
+    }
     .header {
       display: flex;
       align-items: center;
@@ -140,6 +153,14 @@
       padding: 16px 18px;
       box-shadow: var(--shadow-soft);
       backdrop-filter: blur(8px);
+    }
+    .card-compact {
+      padding-top: 14px;
+      padding-bottom: 14px;
+    }
+    .card-sticky {
+      position: sticky;
+      top: 12px;
     }
     .card::before {
       content: "";
@@ -364,8 +385,53 @@
     .banner-err { background: var(--red-bg); border: 1px solid var(--red-border); }
     .banner-info { background: var(--blue-bg); border: 1px solid var(--blue-border); }
     .banner-ok { background: var(--green-bg); border: 1px solid var(--green-border); }
-    .term-wrap { border: 1px solid var(--border); border-radius: 16px; overflow: hidden; height: 55vh; min-height: 320px; margin-top: 2px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
+    .term-wrap {
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      height: 55vh;
+      min-height: 320px;
+      margin-top: 2px;
+      background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 30%),
+        linear-gradient(180deg, #0f172a 0%, #172033 100%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+    }
     .term-wrap iframe { width: 100%; height: 100%; border: 0; background: #000; }
+    .term-placeholder {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 20px;
+      text-align: center;
+      color: #dbeafe;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.92), rgba(23, 32, 51, 0.94));
+    }
+    .term-placeholder strong { font-size: 17px; letter-spacing: -0.02em; }
+    .term-placeholder span { font-size: 13px; color: rgba(219, 234, 254, 0.78); max-width: 420px; }
+    .term-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(167, 199, 255, 0.42);
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform .18s ease, background .18s ease, border-color .18s ease;
+    }
+    .term-chip:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.14);
+      border-color: rgba(167, 199, 255, 0.62);
+    }
     details { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: rgba(255,255,255,0.84); box-shadow: var(--shadow-soft); }
     details > summary { cursor: pointer; padding: 12px 16px; font-size: 13px; color: var(--text2); font-weight: 700; background: rgba(255,255,255,0.9); user-select: none; list-style: none; display: flex; justify-content: space-between; align-items: center; }
     details > summary::after { content: "+"; font-size: 16px; color: var(--text3); }
@@ -379,12 +445,14 @@
       body { padding: 10px; }
       .header { padding: 14px 14px; border-radius: 18px; }
       .header-logo { width: 44px; height: 44px; font-size: 20px; border-radius: 14px; }
+      .dashboard-grid { grid-template-columns: 1fr; }
       .metrics { grid-template-columns: 1fr; }
       .guide-grid { grid-template-columns: 1fr; }
       .kv { align-items: flex-start; flex-direction: column; }
       .kv-val { justify-content: flex-start; }
       .metric-value { font-size: 30px; }
       .btn { width: 100%; justify-content: center; }
+      .card-sticky { position: static; }
     }
   </style>
 </head>
@@ -402,8 +470,8 @@
       </div>
     </div>
     <div class="header-info">
-      <h2>OpenClaw HAOS 插件</h2>
-      <div class="sub">Home Assistant 插件 | 版本 __ADDON_VERSION__</div>
+      <h2>OpenClaw HAOS 鎻掍欢</h2>
+      <div class="sub">Home Assistant 鎻掍欢 | 鐗堟湰 __ADDON_VERSION__</div>
     </div>
     <span class="badge badge-gray" id="modeBadge">__ACCESS_MODE__</span>
   </div>
@@ -418,24 +486,27 @@
     </span>
   </div>
 
-  <div class="card">
-    <div class="card-title">服务状态</div>
+  <div class="dashboard-grid">
+    <div class="main-column">
+
+  <div class="card card-compact">
+    <div class="card-title">鏈嶅姟鐘舵€?/div>
     <div class="status-row">
       <div class="status-left">
         <div class="dot dot-amber" id="statusDot"></div>
-        <span class="status-text" id="statusText">检查中...</span>
+        <span class="status-text" id="statusText">妫€鏌ヤ腑...</span>
       </div>
       <div class="status-badges" id="statusBadges"></div>
     </div>
     <div class="metrics">
       <div class="metric">
-        <div class="metric-label">磁盘</div>
+        <div class="metric-label">纾佺洏</div>
         <div class="metric-value">__DISK_PCT__</div>
         <div class="metric-sub">__DISK_USED__ / __DISK_TOTAL__</div>
         <div class="bar-wrap"><div class="bar" id="diskBar" style="width:0%"></div></div>
       </div>
       <div class="metric">
-        <div class="metric-label">内存</div>
+        <div class="metric-label">鍐呭瓨</div>
         <div class="metric-value">__MEM_PCT__</div>
         <div class="metric-sub">__MEM_USED__ / __MEM_TOTAL__</div>
         <div class="bar-wrap"><div class="bar" id="memBar" style="width:0%"></div></div>
@@ -443,22 +514,20 @@
       <div class="metric">
         <div class="metric-label">CPU</div>
         <div class="metric-value">__CPU_PCT__%</div>
-        <div class="metric-sub">1 分钟负载参考</div>
+        <div class="metric-sub">1 鍒嗛挓璐熻浇鍙傝€?/div>
         <div class="bar-wrap"><div class="bar" id="cpuBar" style="width:0%"></div></div>
       </div>
     </div>
   </div>
 
   <div class="banner banner-err hidden" id="diskBanner">
-    磁盘空间偏低。可在终端中运行 <code>oc-cleanup</code>，或在 HA 主机 Shell 里清理 Docker 镜像。
-  </div>
+    纾佺洏绌洪棿鍋忎綆銆傚彲鍦ㄧ粓绔腑杩愯 <code>oc-cleanup</code>锛屾垨鍦?HA 涓绘満 Shell 閲屾竻鐞?Docker 闀滃儚銆?  </div>
 
   <div class="banner banner-warn hidden" id="migrationBanner">
-    <code>access_mode: custom</code> 可能还需要额外的安全上下文配置。对浏览器和手机来说，<b>lan_https</b> 是最简单的受支持方案。
-  </div>
+    <code>access_mode: custom</code> 鍙兘杩橀渶瑕侀澶栫殑瀹夊叏涓婁笅鏂囬厤缃€傚娴忚鍣ㄥ拰鎵嬫満鏉ヨ锛?b>lan_https</b> 鏄渶绠€鍗曠殑鍙楁敮鎸佹柟妗堛€?  </div>
 
-  <div class="card">
-    <div class="card-title">版本与访问</div>
+  <div class="card card-compact">
+    <div class="card-title">鐗堟湰涓庤闂?/div>
     <div class="kv-list">
       <div class="kv">
         <span class="kv-key">OpenClaw</span>
@@ -469,97 +538,95 @@
         <span class="kv-val"><span class="badge badge-green">__NODE_VERSION__</span></span>
       </div>
       <div class="kv">
-        <span class="kv-key">网关模式</span>
+        <span class="kv-key">缃戝叧妯″紡</span>
         <span class="kv-val"><span class="badge badge-gray" id="gatewayModeText">__GATEWAY_MODE__</span></span>
       </div>
       <div class="kv">
-        <span class="kv-key">配置目录</span>
+        <span class="kv-key">閰嶇疆鐩綍</span>
         <span class="kv-val mono">/config/.openclaw</span>
       </div>
       <div class="kv">
-        <span class="kv-key">网关地址</span>
+        <span class="kv-key">缃戝叧鍦板潃</span>
         <span class="kv-val">
-          <span class="mono mono-copyable" id="gatewayUrlText" title="点击复制">__GATEWAY_PUBLIC_URL__</span>
-          <button class="copy-btn" id="gatewayCopyBtn">复制</button>
+          <span class="mono mono-copyable" id="gatewayUrlText" title="鐐瑰嚮澶嶅埗">__GATEWAY_PUBLIC_URL__</span>
+          <button class="copy-btn" id="gatewayCopyBtn">澶嶅埗</button>
         </span>
       </div>
       <div class="kv" id="tokenRow">
-        <span class="kv-key">网关令牌</span>
+        <span class="kv-key">缃戝叧浠ょ墝</span>
         <span class="kv-val">
-          <span class="mono mono-copyable" id="tokenDisplay" title="点击复制">已隐藏</span>
-          <button class="copy-btn" id="tokenRevealBtn">显示</button>
-          <button class="copy-btn hidden" id="tokenCopyBtn">复制</button>
+          <span class="mono mono-copyable" id="tokenDisplay" title="鐐瑰嚮澶嶅埗">宸查殣钘?/span>
+          <button class="copy-btn" id="tokenRevealBtn">鏄剧ず</button>
+          <button class="copy-btn hidden" id="tokenCopyBtn">澶嶅埗</button>
         </span>
       </div>
       <div class="kv">
-        <span class="kv-key">端口</span>
+        <span class="kv-key">绔彛</span>
         <span class="kv-val">
-          <span class="badge badge-blue">网关 __GATEWAY_PORT__</span>
+          <span class="badge badge-blue">缃戝叧 __GATEWAY_PORT__</span>
           <span class="badge badge-gray">Ingress 48099</span>
-          <span class="badge badge-gray">终端 __TERMINAL_PORT__</span>
+          <span class="badge badge-gray">缁堢 __TERMINAL_PORT__</span>
         </span>
       </div>
       <div class="kv">
-        <span class="kv-key">进程 PID</span>
+        <span class="kv-key">杩涚▼ PID</span>
         <span class="kv-val">
-          <span class="badge badge-blue">网关 __GW_PID__</span>
+          <span class="badge badge-blue">缃戝叧 __GW_PID__</span>
           <span class="badge badge-gray">nginx __NGINX_PID__</span>
           <span class="badge badge-gray">ttyd __TTYD_PID__</span>
-          <span class="badge badge-gray">动作 __ACTION_PID__</span>
+          <span class="badge badge-gray">鍔ㄤ綔 __ACTION_PID__</span>
         </span>
       </div>
     </div>
   </div>
 
-  <div class="card">
+  <div class="card card-compact">
     <div class="hero">
-      <div class="hero-title">HAOS 控制中心</div>
+      <div class="hero-title">HAOS 鎺у埗涓績</div>
       <div class="hero-sub">
-        这个页面是 OpenClaw 在 Home Assistant 里的统一入口。你可以在新标签页打开原生 Gateway 控制界面，也可以留在这里查看健康状态、令牌、终端和访问诊断。
-      </div>
+        杩欎釜椤甸潰鏄?OpenClaw 鍦?Home Assistant 閲岀殑缁熶竴鍏ュ彛銆備綘鍙互鍦ㄦ柊鏍囩椤垫墦寮€鍘熺敓 Gateway 鎺у埗鐣岄潰锛屼篃鍙互鐣欏湪杩欓噷鏌ョ湅鍋ュ悍鐘舵€併€佷护鐗屻€佺粓绔拰璁块棶璇婃柇銆?      </div>
       <div class="hero-tip">
-        如果打开原生 Gateway 界面后仍提示设备签名过期，请先清除该站点缓存或改用无痕窗口，再重新打开。
-      </div>
+        濡傛灉鎵撳紑鍘熺敓 Gateway 鐣岄潰鍚庝粛鎻愮ず璁惧绛惧悕杩囨湡锛岃鍏堟竻闄よ绔欑偣缂撳瓨鎴栨敼鐢ㄦ棤鐥曠獥鍙ｏ紝鍐嶉噸鏂版墦寮€銆?      </div>
       <div class="guide-grid">
         <div class="guide-card">
-          <h3>在这里配置</h3>
+          <h3>鍦ㄨ繖閲岄厤缃?/h3>
           <ul>
-            <li><code>Home Assistant Token</code>、MCP、访问模式、端口等 add-on 参数</li>
-            <li><code>Brave Search</code>、<code>Gemini Memory Search</code> 这类能力开关</li>
-            <li>保存并重启 add-on 后自动生效</li>
+            <li><code>Home Assistant Token</code>銆丮CP銆佽闂ā寮忋€佺鍙ｇ瓑 add-on 鍙傛暟</li>
+            <li><code>Brave Search</code>銆?code>Gemini Memory Search</code> 杩欑被鑳藉姏寮€鍏?/li>
+            <li>淇濆瓨骞堕噸鍚?add-on 鍚庤嚜鍔ㄧ敓鏁?/li>
           </ul>
         </div>
         <div class="guide-card">
-          <h3>在终端运行 <code>openclaw onboard</code></h3>
+          <h3>鍦ㄧ粓绔繍琛?<code>openclaw onboard</code></h3>
           <ul>
-            <li>登录主模型账号 / OAuth</li>
-            <li>选择默认聊天模型、channels、hooks</li>
-            <li>更适合首次初始化，不建议每次启动都重复操作</li>
+            <li>鐧诲綍涓绘ā鍨嬭处鍙?/ OAuth</li>
+            <li>閫夋嫨榛樿鑱婂ぉ妯″瀷銆乧hannels銆乭ooks</li>
+            <li>鏇撮€傚悎棣栨鍒濆鍖栵紝涓嶅缓璁瘡娆″惎鍔ㄩ兘閲嶅鎿嶄綔</li>
           </ul>
         </div>
       </div>
-      <div class="mini-note">建议：配置页负责 add-on 参数，<code>openclaw onboard</code> 负责 OpenClaw 自身初始化。</div>
+      <div class="mini-note">寤鸿锛氶厤缃〉璐熻矗 add-on 鍙傛暟锛?code>openclaw onboard</code> 璐熻矗 OpenClaw 鑷韩鍒濆鍖栥€?/div>
     </div>
     <hr class="divider">
-    <div class="card-title">操作</div>
+    <div class="card-title">鎿嶄綔</div>
     <div class="btn-grid">
-      <a class="btn btn-primary" id="gwBtn" href="__GATEWAY_PUBLIC_URL____GW_PUBLIC_URL_PATH__" target="_blank" rel="noopener noreferrer">打开原生 Gateway 界面</a>
-      <a class="btn" href="./terminal/" target="_self">打开终端</a>
-      <a class="btn hidden" id="certBtn" href="" target="_blank" rel="noopener noreferrer">下载 CA 证书</a>
-      <button class="btn" id="gatewayStatusBtn">查看网关状态</button>
-      <button class="btn" id="gatewayRestartBtn">重启网关</button>
-      <button class="btn" id="checkUpdateBtn">检查 npm 版本</button>
+      <a class="btn btn-primary" id="gwBtn" href="__GATEWAY_PUBLIC_URL____GW_PUBLIC_URL_PATH__" target="_blank" rel="noopener noreferrer">鎵撳紑鍘熺敓 Gateway 鐣岄潰</a>
+      <a class="btn" href="./terminal/" target="_self">鎵撳紑缁堢</a>
+      <a class="btn hidden" id="certBtn" href="" target="_blank" rel="noopener noreferrer">涓嬭浇 CA 璇佷功</a>
+      <button class="btn" id="gatewayStatusBtn">鏌ョ湅缃戝叧鐘舵€?/button>
+      <button class="btn" id="gatewayRestartBtn">閲嶅惎缃戝叧</button>
+      <button class="btn" id="checkUpdateBtn">妫€鏌?npm 鐗堟湰</button>
     </div>
     <hr class="divider">
-    <div class="card-title">终端快捷命令</div>
-    <div class="section-subtitle">配对与初始化</div>
+    <div class="card-title">缁堢蹇嵎鍛戒护</div>
+    <div class="section-subtitle">閰嶅涓庡垵濮嬪寲</div>
     <div class="btn-grid">
       <button class="btn" data-term-cmd="openclaw devices list">devices list</button>
       <button class="btn" data-term-cmd="openclaw devices approve --latest">approve --latest</button>
       <button class="btn" data-term-cmd="openclaw onboard">onboard</button>
       <button class="btn" data-term-cmd="openclaw doctor --fix">doctor --fix</button>
     </div>
-    <div class="section-subtitle">诊断与维护</div>
+    <div class="section-subtitle">璇婃柇涓庣淮鎶?/div>
       <div class="btn-grid">
         <button class="btn" data-term-cmd="openclaw health --json">health --json</button>
         <button class="btn" data-term-cmd="openclaw status --deep">status --deep</button>
@@ -571,38 +638,40 @@
         <button class="btn" data-term-cmd="openclaw memory status --deep">memory status</button>
         <button class="btn" data-term-cmd="jq -r '.gateway.auth.token' /config/.openclaw/openclaw.json">read token</button>
       </div>
-    <div class="section-subtitle">备份与恢复</div>
+    <div class="section-subtitle">澶囦唤涓庢仮澶?/div>
       <div class="btn-grid">
         <button class="btn" data-term-cmd="ls -la /share/openclaw-backup/latest">backup dir</button>
         <button class="btn" data-term-cmd="mkdir -p /share/openclaw-backup/latest && cp -a /config/.openclaw /share/openclaw-backup/latest/ && cp -a /config/.mcporter /share/openclaw-backup/latest/">backup state</button>
       </div>
     <div class="hero-sub" style="margin-top:6px"><code>/share/openclaw-backup/latest</code></div>
     <div class="hero-sub" style="margin-top:8px">
-      点击后会把命令填入下方终端，不会自动执行；按回车即可运行。
-    </div>
+      鐐瑰嚮鍚庝細鎶婂懡浠ゅ～鍏ヤ笅鏂圭粓绔紝涓嶄細鑷姩鎵ц锛涙寜鍥炶溅鍗冲彲杩愯銆?    </div>
     <hr class="divider">
     <div id="actionPanel" class="action-panel hidden">
       <div class="action-head">
-        <div class="action-title" id="actionTitle">操作结果</div>
-        <span class="badge badge-gray" id="actionState">提示</span>
+        <div class="action-title" id="actionTitle">鎿嶄綔缁撴灉</div>
+        <span class="badge badge-gray" id="actionState">鎻愮ず</span>
       </div>
       <div class="action-body" id="actionBody"></div>
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-title">快速诊断</div>
+    </div>
+    <div class="side-column">
+
+  <div class="card card-compact">
+    <div class="card-title">蹇€熻瘖鏂?/div>
     <div class="diag-row">
-      <span>网关健康</span>
-      <span class="diag-muted" id="diagGateway">检查中...</span>
+      <span>缃戝叧鍋ュ悍</span>
+      <span class="diag-muted" id="diagGateway">妫€鏌ヤ腑...</span>
     </div>
     <div class="diag-row">
-      <span>访问模式</span>
+      <span>璁块棶妯″紡</span>
       <span id="diagAccess" class="diag-muted">__ACCESS_MODE__</span>
     </div>
     <div class="diag-row">
-      <span>安全上下文</span>
-      <span id="diagSecure" class="diag-muted">检查中...</span>
+      <span>瀹夊叏涓婁笅鏂?/span>
+      <span id="diagSecure" class="diag-muted">妫€鏌ヤ腑...</span>
     </div>
     <div class="diag-row">
       <span>MCP</span>
@@ -616,49 +685,54 @@
       <span>Memory Search</span>
       <span class="diag-muted" id="diagMemory">-</span>
     </div>
-    <div class="mini-note">这里只显示当前已启用的能力状态；未启用的 MCP / Web Search / Memory Search 会自动隐藏。</div>
+    <div class="mini-note">杩欓噷鍙樉绀哄綋鍓嶅凡鍚敤鐨勮兘鍔涚姸鎬侊紱鏈惎鐢ㄧ殑 MCP / Web Search / Memory Search 浼氳嚜鍔ㄩ殣钘忋€?/div>
   </div>
 
   <div id="wizardCard" class="hidden"></div>
 
   <details>
-    <summary>令牌与连接帮助</summary>
+    <summary>浠ょ墝涓庤繛鎺ュ府鍔?/summary>
     <div class="details-body">
-      在 HAOS 中，这个落地页就是总控入口。使用 <b>打开原生 Gateway 界面</b> 可在新标签页进入 OpenClaw 完整控制界面。如果网关要求输入令牌，也可以在插件终端里读取：
+      鍦?HAOS 涓紝杩欎釜钀藉湴椤靛氨鏄€绘帶鍏ュ彛銆備娇鐢?<b>鎵撳紑鍘熺敓 Gateway 鐣岄潰</b> 鍙湪鏂版爣绛鹃〉杩涘叆 OpenClaw 瀹屾暣鎺у埗鐣岄潰銆傚鏋滅綉鍏宠姹傝緭鍏ヤ护鐗岋紝涔熷彲浠ュ湪鎻掍欢缁堢閲岃鍙栵細
       <pre>jq -r '.gateway.auth.token' /config/.openclaw/openclaw.json</pre>
-      这个页面调用的是 OpenClaw 官方网关控制命令：
-      <pre>openclaw gateway status
+      杩欎釜椤甸潰璋冪敤鐨勬槸 OpenClaw 瀹樻柟缃戝叧鎺у埗鍛戒护锛?      <pre>openclaw gateway status
 openclaw gateway restart</pre>
-      如果需要设备配对：
+      濡傛灉闇€瑕佽澶囬厤瀵癸細
       <pre>openclaw devices list
 openclaw devices approve &lt;requestId&gt;</pre>
     </div>
   </details>
 
   <details>
-    <summary>MCP 设置</summary>
+    <summary>MCP 璁剧疆</summary>
     <div class="details-body">
-      <b>自动配置</b>
+      <b>鑷姩閰嶇疆</b>
       <ol>
-        <li>创建一个 Home Assistant 长期访问令牌。</li>
-        <li>填写 <code>homeassistant_token</code>。</li>
-        <li>启用 <code>auto_configure_mcp</code>。</li>
-        <li>重启插件。</li>
+        <li>鍒涘缓涓€涓?Home Assistant 闀挎湡璁块棶浠ょ墝銆?/li>
+        <li>濉啓 <code>homeassistant_token</code>銆?/li>
+        <li>鍚敤 <code>auto_configure_mcp</code>銆?/li>
+        <li>閲嶅惎鎻掍欢銆?/li>
       </ol>
       <div class="hero-sub" style="margin:8px 0 10px">
-        当前镜像如果没有内置 <code>mcporter</code>，页面会明确提示“缺少 mcporter”，这时需要等后续镜像补齐，或在终端里手动提供该工具后再注册。
-      </div>
-      <b>手动配置</b>
+        褰撳墠闀滃儚濡傛灉娌℃湁鍐呯疆 <code>mcporter</code>锛岄〉闈細鏄庣‘鎻愮ず鈥滅己灏?mcporter鈥濓紝杩欐椂闇€瑕佺瓑鍚庣画闀滃儚琛ラ綈锛屾垨鍦ㄧ粓绔噷鎵嬪姩鎻愪緵璇ュ伐鍏峰悗鍐嶆敞鍐屻€?      </div>
+      <b>鎵嬪姩閰嶇疆</b>
       <pre>mcporter config add HA "http://localhost:8123/api/mcp" \
   --header "Authorization=Bearer YOUR_TOKEN" \
   --scope home</pre>
     </div>
   </details>
 
-  <div class="card" style="padding:12px">
-    <div class="card-title" style="margin-bottom:8px">终端</div>
+  <div class="card card-sticky" style="padding:12px">
+    <div class="card-title" style="margin-bottom:8px">缁堢</div>
     <div class="term-wrap">
-      <iframe id="termFrame" src="./terminal/" title="终端" loading="lazy"></iframe>
+      <div class="term-placeholder" id="termPlaceholder">
+        <strong>缁堢鎸夐渶鍔犺浇</strong>
+        <span>棣栨鐐瑰嚮杩欓噷鎴栨墽琛屽揩鎹峰懡浠ゆ椂鍐嶅惎鍔ㄧ粓绔紝鍑忓皯椤甸潰棣栧睆鍗￠】鍜屽悗鍙拌祫婧愬崰鐢ㄣ€?/span>
+        <button class="term-chip" id="termLoadBtn" type="button">鍔犺浇缁堢</button>
+      </div>
+      <iframe id="termFrame" data-src="./terminal/" title="缁堢" loading="lazy" class="hidden"></iframe>
+    </div>
+  </div>
     </div>
   </div>
 </div>
@@ -691,8 +765,14 @@ openclaw devices approve &lt;requestId&gt;</pre>
     local: "\u672c\u5730",
     remote: "\u8fdc\u7a0b"
   };
+  var tokenValue = "";
+  var terminalLoading = null;
+  var gatewayPollTimer = null;
 
-  function $(id) { return document.getElementById(id); }
+  function $(id) {
+    return document.getElementById(id);
+  }
+
   function ingressUrl(path) {
     var cleaned = String(path || "").replace(/^\/+/, "");
     var base = window.location.href.split("#")[0];
@@ -701,144 +781,21 @@ openclaw devices approve &lt;requestId&gt;</pre>
     }
     return new URL(cleaned, base).toString();
   }
+
   function withTokenHash(url, token) {
-    if (!url || !token) { return url; }
-    var base = String(url).replace(/#.*$/, "");
-    return base + "#token=" + encodeURIComponent(token);
+    if (!url || !token) {
+      return url;
+    }
+    return String(url).replace(/#.*$/, "") + "#token=" + encodeURIComponent(token);
   }
-  function safeText(value, fallback) {
-    var text = String(value == null ? "" : value).trim();
-    return text || fallback || "";
-  }
+
   function findTerminalTextarea(doc) {
-    if (!doc) { return null; }
+    if (!doc) {
+      return null;
+    }
     return doc.querySelector(".xterm-helper-textarea, textarea.xterm-helper-textarea, textarea");
   }
-  function selectText(el) {
-    if (!el) { return; }
-    var range = document.createRange();
-    range.selectNodeContents(el);
-    var sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
-  }
-  function setTextAndSelect(id, text) {
-    var el = $(id);
-    if (!el) { return; }
-    el.textContent = text;
-    selectText(el);
-  }
-  function setActionFeedback(kind, title, body, code) {
-    var panel = $("actionPanel");
-    var titleEl = $("actionTitle");
-    var stateEl = $("actionState");
-    var bodyEl = $("actionBody");
-    if (!panel || !titleEl || !stateEl || !bodyEl) { return; }
-    panel.className = "action-panel state-" + kind;
-    titleEl.textContent = title;
-    stateEl.textContent = kind === "ok" ? "\u5b8c\u6210" : kind === "warn" ? "\u6ce8\u610f" : "\u5931\u8d25";
-    stateEl.className = "badge " + (kind === "ok" ? "badge-green" : kind === "warn" ? "badge-amber" : "badge-amber");
-    bodyEl.innerHTML = "";
-    if (body) {
-      var msg = document.createElement("div");
-      msg.textContent = body;
-      bodyEl.appendChild(msg);
-    }
-    if (code) {
-      var pre = document.createElement("pre");
-      pre.className = "action-pre";
-      pre.textContent = code;
-      bodyEl.appendChild(pre);
-    }
-    panel.classList.remove("hidden");
-  }
-  /* legacy broken function injectCommandToTerminal(command) {
-    var frame = $("termFrame");
-    if (!frame || !frame.contentWindow) {
-      setActionFeedback("warn", "终端未就绪", "终端尚未就绪，无法填入命令。");
-      return;
-    }
-    try {
-      var doc = frame.contentWindow.document;
-      var input = findTerminalTextarea(doc);
-      if (!input) {
-        setActionFeedback("warn", "终端未就绪", "终端输入框暂不可用，请先点击一次下方终端。");
-        return;
-      }
-      frame.contentWindow.focus();
-      input.focus();
-      input.value = command;
-      input.dispatchEvent(new InputEvent("input", {
-        bubbles: true,
-        cancelable: true,
-        data: command,
-        inputType: "insertText"
-      }));
-      setActionFeedback("ok", "命令已填入终端", "按回车即可执行。", command);
-    } catch (_err) {
-      setActionFeedback("warn", "终端写入失败", "无法直接写入终端，请先点击终端后再试。");
-    }
-  }
-  } */
-  /* active injectCommandToTerminal(command) {
-    var frame = $("termFrame");
-    if (!frame || !frame.contentWindow) {
-      setActionFeedback("warn", "终端未就绪", "终端尚未就绪，无法填入命令。");
-      return;
-    }
-    try {
-      var doc = frame.contentWindow.document;
-      var input = findTerminalTextarea(doc);
-      if (!input) {
-        setActionFeedback("warn", "终端未就绪", "终端输入框暂不可用，请先点击一次下方终端。");
-        return;
-      }
-      frame.contentWindow.focus();
-      input.focus();
-      input.value = command;
-      input.dispatchEvent(new InputEvent("input", {
-        bubbles: true,
-        cancelable: true,
-        data: command,
-        inputType: "insertText"
-      }));
-      if ($("actionPanel")) { $("actionPanel").classList.add("hidden"); }
-    } catch (_err) {
-      setActionFeedback("warn", "终端写入失败", "无法直接写入终端，请先点击终端后再试。");
-    }
-  }
-  } */
-  function injectCommandToTerminal(command, submit) {
-    var frame = $("termFrame");
-    if (!frame || !frame.contentWindow) {
-      setActionFeedback("warn", "\u7ec8\u7aef\u672a\u5c31\u7eea", "\u7ec8\u7aef\u5c1a\u672a\u5c31\u7eea\uff0c\u65e0\u6cd5\u586b\u5165\u547d\u4ee4\u3002");
-      return;
-    }
-    try {
-      var doc = frame.contentWindow.document;
-      var input = findTerminalTextarea(doc);
-      if (!input) {
-        setActionFeedback("warn", "\u7ec8\u7aef\u672a\u5c31\u7eea", "\u7ec8\u7aef\u8f93\u5165\u6846\u6682\u4e0d\u53ef\u7528\uff0c\u8bf7\u5148\u70b9\u51fb\u4e00\u6b21\u4e0b\u65b9\u7ec8\u7aef\u3002");
-        return;
-      }
-      var payload = String(command || "");
-      if (submit && !/\n$/.test(payload)) {
-        payload += "\n";
-      }
-      frame.contentWindow.focus();
-      input.focus();
-      input.value = payload;
-      input.dispatchEvent(new InputEvent("input", {
-        bubbles: true,
-        cancelable: true,
-        data: payload,
-        inputType: "insertText"
-      }));
-      if ($("actionPanel")) { $("actionPanel").classList.add("hidden"); }
-    } catch (_err) {
-      setActionFeedback("warn", "\u7ec8\u7aef\u5199\u5165\u5931\u8d25", "\u65e0\u6cd5\u76f4\u63a5\u5199\u5165\u7ec8\u7aef\uff0c\u8bf7\u5148\u70b9\u51fb\u7ec8\u7aef\u540e\u518d\u8bd5\u3002");
-    }
-  }
+
   function copyText(text) {
     var value = String(text || "");
     if (!value) {
@@ -858,1044 +815,184 @@ openclaw devices approve &lt;requestId&gt;</pre>
       document.body.appendChild(ta);
       ta.focus();
       ta.select();
-      ta.setSelectionRange(0, ta.value.length);
       try {
         if (document.execCommand("copy")) {
           document.body.removeChild(ta);
           resolve();
           return;
         }
-      } catch (_err) {
-      }
+      } catch (_err) {}
       document.body.removeChild(ta);
       reject(new Error("copy_failed"));
     });
   }
+
   function flashButtonText(id, successText, idleText) {
     var el = $(id);
-    if (!el) { return; }
+    if (!el) {
+      return;
+    }
     el.textContent = successText;
-    setTimeout(function () { el.textContent = idleText; }, 1500);
+    setTimeout(function () {
+      el.textContent = idleText;
+    }, 1500);
   }
+
   function setButtonState(id, disabled) {
     var el = $(id);
-    if (!el) { return; }
-    el.disabled = disabled;
-    if (disabled) { el.classList.add("hidden"); }
+    if (!el) {
+      return;
+    }
+    el.disabled = !!disabled;
   }
-  function escapeHtml(text) {
-    return String(text)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
+
+  function barColor(pct) {
+    return pct >= 90 ? "bar-red" : pct >= 70 ? "bar-amber" : "bar-green";
   }
-  function barColor(p) { return p >= 90 ? "bar-red" : p >= 70 ? "bar-amber" : "bar-green"; }
+
   function setBar(id, pct) {
     var el = $(id);
-    if (!el || Number.isNaN(pct)) { return; }
-    el.style.width = Math.min(pct, 100) + "%";
-    el.className = "bar " + barColor(pct);
-  }
-  /* legacy broken runtime block: function setHealthState(ok, message) {
-    var dot = $("statusDot");
-    var txt = $("statusText");
-    var badges = $("statusBadges");
-    if (ok) {
-      dot.className = "dot dot-green";
-      txt.textContent = message || "运行中";
-      txt.style.color = "var(--green)";
-      badges.innerHTML = '<span class="badge badge-green">网关正常</span>';
-      $("diagGateway").textContent = "正常";
-      $("diagGateway").className = "diag-ok";
-    } else {
-      dot.className = "dot dot-red";
-      txt.textContent = message || "不可用";
-      txt.style.color = "var(--red)";
-      badges.innerHTML = '<span class="badge badge-amber">检查配置</span>';
-      $("diagGateway").textContent = "不可用";
-      $("diagGateway").className = "diag-err";
-    }
-  }
-
-  if (DISK_PCT) {
-    var dp = parseInt(DISK_PCT, 10);
-    setBar("diskBar", dp);
-    if (dp >= 75) {
-      $("diskBanner").classList.remove("hidden");
-      $("diskBanner").textContent = "磁盘已使用 " + DISK_PCT + "，剩余空间 " + DISK_AVAIL + "。";
-    }
-  }
-  if (MEM_PCT) { setBar("memBar", parseInt(MEM_PCT, 10)); }
-  if (CPU_PCT) { setBar("cpuBar", parseFloat(CPU_PCT)); }
-
-  if (ACCESS_MODE === "custom") {
-    $("migrationBanner").classList.remove("hidden");
-  }
-
-  var isSecure =
-    location.protocol === "https:" ||
-    location.hostname === "localhost" ||
-    location.hostname === "127.0.0.1" ||
-    location.hostname === "::1";
-  var gwUrlIsHttps = /^https:\/\//i.test(GW_URL || "");
-  if (isSecure) {
-    $("diagSecure").textContent = "安全";
-    $("diagSecure").className = "diag-ok";
-  } else if (ACCESS_MODE === "lan_https" && gwUrlIsHttps) {
-    $("diagSecure").textContent = "入口页非安全，原生界面安全";
-    $("diagSecure").className = "diag-warn";
-    $("diagSecure").title = "当前 HA Ingress 页面本身不是安全上下文，但通过上方“打开原生 Gateway 界面”进入的 HTTPS 控制界面是安全的。";
-  } else {
-    $("diagSecure").textContent = "不安全";
-    $("diagSecure").className = "diag-err";
-  }
-
-  var modeColors = {
-    lan_https: "badge-green",
-    tailnet_https: "badge-green",
-    lan_reverse_proxy: "badge-blue",
-    local_only: "badge-gray",
-    custom: "badge-amber"
-  };
-  $("modeBadge").className = "badge " + (modeColors[ACCESS_MODE] || "badge-gray");
-  $("modeBadge").textContent = ACCESS_MODE_LABELS[ACCESS_MODE] || ACCESS_MODE;
-  $("modeBadge").title = ACCESS_MODE;
-  $("diagAccess").textContent = ACCESS_MODE_LABELS[ACCESS_MODE] || ACCESS_MODE;
-  $("diagAccess").title = ACCESS_MODE;
-  $("gatewayModeText").textContent = GATEWAY_MODE_LABELS[GATEWAY_MODE] || GATEWAY_MODE;
-  $("gatewayModeText").title = GATEWAY_MODE;
-
-  function normalizePidRow() {
-    var kept = false;
-    var rows = document.querySelectorAll(".kv");
-    rows.forEach(function (row) {
-      var badges = row.querySelectorAll(".badge");
-      if (badges.length !== 4) { return; }
-      if (!/^nginx\s+/i.test(badges[1].textContent.trim())) { return; }
-      if (!/^ttyd\s+/i.test(badges[2].textContent.trim())) { return; }
-
-      var key = row.querySelector(".kv-key");
-      if (key) { key.textContent = "PID"; }
-
-      var gwPid = badges[0].textContent.trim().split(/\s+/).pop();
-      var nginxPid = badges[1].textContent.trim().split(/\s+/).pop();
-      var ttydPid = badges[2].textContent.trim().split(/\s+/).pop();
-      var actionPid = badges[3].textContent.trim().split(/\s+/).pop();
-
-      badges[0].textContent = "Gateway " + gwPid;
-      badges[1].textContent = "nginx " + nginxPid;
-      badges[2].textContent = "ttyd " + ttydPid;
-      badges[3].textContent = "Action " + actionPid;
-      if (!kept) {
-        kept = true;
-        row.classList.remove("hidden");
-      } else {
-        row.classList.add("hidden");
-      }
-    });
-  }
-
-  function attachPidRowTemplate() {
-    return;
-  }
-
-  function normalizeLocalCopy() {
-    var guideCards = document.querySelectorAll(".guide-card");
-    if (guideCards[0]) {
-      guideCards[0].innerHTML =
-        '<h3>配置页负责</h3>' +
-        '<ul>' +
-        '<li><code>Home Assistant Token</code>、MCP、访问模式、端口等 add-on 参数</li>' +
-        '<li><code>Brave Search</code>、<code>Gemini Memory Search</code> 这类能力开关</li>' +
-        '<li>保存并重启 add-on 后自动生效</li>' +
-        '</ul>';
-    }
-    if (guideCards[1]) {
-      guideCards[1].innerHTML =
-        '<h3>终端里的 <code>openclaw onboard</code></h3>' +
-        '<ul>' +
-        '<li>登录主模型账号 / OAuth</li>' +
-        '<li>选择默认聊天模型、channels、hooks</li>' +
-        '<li>更适合首次初始化，不建议每次启动都重复操作</li>' +
-        '</ul>';
-    }
-
-    var notes = document.querySelectorAll(".mini-note");
-    if (notes[0]) {
-      notes[0].innerHTML = '建议：配置页负责 add-on 参数，<code>openclaw onboard</code> 负责 OpenClaw 自身初始化。';
-    }
-    if (notes[1]) {
-      notes[1].textContent = '这里只显示当前已启用的能力状态；未启用的 MCP / Web Search / Memory Search 会自动隐藏。';
-    }
-
-    var subtitles = document.querySelectorAll(".section-subtitle");
-    if (subtitles[0]) { subtitles[0].textContent = '配对与初始化'; }
-    if (subtitles[1]) { subtitles[1].textContent = '诊断与维护'; }
-    if (subtitles[2]) { subtitles[2].textContent = '备份与恢复'; }
-
-    var backupHint = document.querySelector('.hero-sub[style*="margin-top:6px"]');
-    if (backupHint) {
-      backupHint.innerHTML = '共享备份目录：<code>/share/openclaw-backup/latest</code>';
-    }
-  }
-
-  attachPidRowTemplate();
-  normalizePidRow();
-  normalizeLocalCopy();
-
-  if (ACCESS_MODE === "lan_https" && HTTPS_PORT) {
-    var certBtn = $("certBtn");
-    certBtn.href = "https://" + location.hostname + ":" + HTTPS_PORT + "/cert/ca.crt";
-    certBtn.classList.remove("hidden");
-  }
-
-  var mcpEl = $("diagMcp");
-  if (mcpEl) {
-    var st = mcpEl.textContent.trim().toLowerCase();
-    mcpEl.dataset.rawStatus = st;
-    if (st === "registered" || st === "enabled") {
-      mcpEl.textContent = "已注册";
-      mcpEl.className = "diag-ok";
-    } else if (st === "configured") {
-      mcpEl.textContent = "MCP configured";
-      mcpEl.className = "diag-warn";
-      mcpEl.title = "mcporter config exists, but startup verification has not completed yet.";
-    } else if (st === "disabled") {
-      mcpEl.textContent = "已关闭";
-      mcpEl.className = "diag-muted";
-    } else if (st === "needs-token") {
-      mcpEl.textContent = "缺少令牌";
-      mcpEl.className = "diag-warn";
-      mcpEl.title = "已启用 auto_configure_mcp，但还没有填写 homeassistant_token。";
-    } else if (st === "mcporter-missing") {
-      mcpEl.textContent = "缺少 mcporter";
-      mcpEl.className = "diag-warn";
-      mcpEl.title = "当前镜像里没有 mcporter，因此无法自动注册 Home Assistant MCP。";
-    } else if (!st) {
-      mcpEl.textContent = "未配置";
-      mcpEl.className = "diag-muted";
-    }
-  }
-
-  if (mcpEl) {
-    var mcpRow = mcpEl.closest(".diag-row");
-    var mcpState = (mcpEl.dataset.rawStatus || "").trim().toLowerCase();
-    if (mcpRow) {
-      if (mcpState === "disabled" || !mcpState) {
-        mcpRow.classList.add("hidden");
-      } else {
-        mcpRow.classList.remove("hidden");
-      }
-    }
-  }
-
-  var webRow = $("diagWebRow");
-  var webEl = $("diagWeb");
-  if (webRow && webEl) {
-    if (WEB_SEARCH_ENABLED) {
-      webEl.textContent = WEB_SEARCH_PROVIDER || "已启用";
-      webEl.className = "diag-ok";
-      webEl.title = WEB_SEARCH_PROVIDER ? "当前启用的 web_search provider" : "Web search 已启用";
-      webRow.classList.remove("hidden");
-    } else {
-      webRow.classList.add("hidden");
-    }
-  }
-
-  var memoryRow = $("diagMemoryRow");
-  var memoryEl = $("diagMemory");
-  if (memoryRow && memoryEl) {
-    if (MEMORY_SEARCH_ENABLED) {
-      var parts = [];
-      if (MEMORY_SEARCH_PROVIDER) { parts.push(MEMORY_SEARCH_PROVIDER); }
-      if (MEMORY_SEARCH_MODEL) { parts.push(MEMORY_SEARCH_MODEL); }
-      memoryEl.textContent = parts.length ? parts.join(" / ") : "已启用";
-      memoryEl.className = "diag-ok";
-      memoryEl.title = parts.length ? "当前启用的 memory search provider / model" : "Memory search 已启用";
-      memoryRow.classList.remove("hidden");
-    } else {
-      memoryRow.classList.add("hidden");
-    }
-  }
-
-  var accessEl = $("diagAccess");
-  if (["lan_https", "tailnet_https", "lan_reverse_proxy"].indexOf(ACCESS_MODE) >= 0) {
-    accessEl.className = "diag-ok";
-  } else if (ACCESS_MODE === "local_only") {
-    accessEl.className = "diag-muted";
-  } else {
-    accessEl.className = "diag-warn";
-  }
-
-  if (!GW_URL) {
-    $("gatewayCopyBtn").disabled = true;
-    $("gwBtn").classList.add("hidden");
-  }
-
-  if (!TOKEN_AVAILABLE) {
-    $("tokenRow").classList.add("hidden");
-  }
-
-  if (GATEWAY_MODE === "remote") {
-    setButtonState("gatewayStatusBtn", true);
-    setButtonState("gatewayRestartBtn", true);
-  }
-
-  async function checkGateway() {
-    if (GATEWAY_MODE === "remote" && !GW_URL) {
-      setHealthState(false, "请设置 gateway_public_url");
+    var value = Number(pct);
+    if (!el || Number.isNaN(value)) {
       return;
     }
-    var url = GATEWAY_MODE === "remote" ? GW_URL + "/health" : ingressUrl("health");
-    try {
-      var res = await fetch(url, { cache: "no-cache" });
-      if (!res.ok) { throw new Error("HTTP " + res.status); }
-      var data = null;
-      try {
-        data = await res.json();
-      } catch (_parseErr) {
-        data = null;
-      }
-      if (data && data.ok === false) {
-        throw new Error(data.error || "health");
-      }
-      setHealthState(true, GATEWAY_MODE === "remote" ? "远程网关可达" : "运行中");
-    } catch (_err) {
-      setHealthState(false, GATEWAY_MODE === "remote" ? "远程网关不可达" : "不可用");
-    }
+    el.style.width = Math.max(0, Math.min(value, 100)) + "%";
+    el.className = "bar " + barColor(value);
   }
-
-  checkGateway();
-  setInterval(checkGateway, 30000);
-
-  var tokenValue = "";
-  var gwBtn = $("gwBtn");
-
-  if (gwBtn) {
-    gwBtn.addEventListener("click", function (event) {
-      if (!GW_URL || !TOKEN_AVAILABLE) { return; }
-      event.preventDefault();
-
-      function openWithToken(token) {
-        window.open(withTokenHash(gwBtn.href, token), "_blank", "noopener,noreferrer");
-      }
-
-      if (tokenValue) {
-        openWithToken(tokenValue);
-        return;
-      }
-
-      fetch(ingressUrl("token"), { cache: "no-cache" })
-        .then(function (r) {
-          if (!r.ok) { throw new Error("token"); }
-          return r.text();
-        })
-        .then(function (t) {
-          tokenValue = t.trim();
-          if (!tokenValue) { throw new Error("empty"); }
-          $("tokenDisplay").textContent = tokenValue;
-          $("tokenRevealBtn").classList.add("hidden");
-          $("tokenCopyBtn").classList.remove("hidden");
-          openWithToken(tokenValue);
-        })
-        .catch(function () {
-          setActionFeedback("warn", "未能自动附带令牌", "已退回普通打开方式。如果控制界面要求令牌，可先点击“显示”或“read token”。");
-          window.open(gwBtn.href, "_blank", "noopener,noreferrer");
-        });
-    });
-  }
-
-  $("tokenRevealBtn") && $("tokenRevealBtn").addEventListener("click", function () {
-    if (tokenValue) {
-      $("tokenDisplay").textContent = tokenValue;
-      $("tokenRevealBtn").classList.add("hidden");
-      $("tokenCopyBtn").classList.remove("hidden");
-      return;
-    }
-    fetch(ingressUrl("token"), { cache: "no-cache" })
-      .then(function (r) {
-        if (!r.ok) { throw new Error("token"); }
-        return r.text();
-      })
-      .then(function (t) {
-        tokenValue = t.trim();
-        if (!tokenValue) { throw new Error("empty"); }
-        $("tokenDisplay").textContent = tokenValue;
-        $("tokenRevealBtn").classList.add("hidden");
-        $("tokenCopyBtn").classList.remove("hidden");
-      })
-      .catch(function () {
-        setTextAndSelect("tokenDisplay", "可在终端里用 jq 读取。");
-        setActionFeedback("warn", "读取令牌失败", "可以使用下方快捷命令“read token”，或在终端中手动读取。");
-      });
-  });
-
-  $("tokenCopyBtn") && $("tokenCopyBtn").addEventListener("click", function () {
-    if (!tokenValue) { return; }
-    copyText(tokenValue)
-      .then(function () {
-        flashButtonText("tokenCopyBtn", "已复制", "复制");
-      })
-      .catch(function () {
-        setTextAndSelect("tokenDisplay", tokenValue);
-        setActionFeedback("warn", "令牌复制失败", "已为你选中令牌文本，请手动复制。");
-      });
-  });
-
-  $("gatewayCopyBtn").addEventListener("click", function () {
-    if (!GW_URL) { return; }
-    copyText(GW_URL)
-      .then(function () {
-        flashButtonText("gatewayCopyBtn", "已复制", "复制");
-      })
-      .catch(function () {
-        setTextAndSelect("gatewayUrlText", GW_URL);
-        setActionFeedback("warn", "地址复制失败", "已为你选中网关地址，请手动复制。");
-      });
-  });
-
-  $("gatewayUrlText").addEventListener("click", function () {
-    if (!GW_URL) { return; }
-    copyText(GW_URL).then(function () {
-      flashButtonText("gatewayCopyBtn", "已复制", "复制");
-    }).catch(function () {
-      setTextAndSelect("gatewayUrlText", GW_URL);
-      setActionFeedback("warn", "地址已选中", "当前环境不支持直接复制，请手动复制已选中的地址。");
-    });
-  });
-
-  $("tokenDisplay").addEventListener("click", function () {
-    if (!tokenValue) {
-      selectText($("tokenDisplay"));
-      return;
-    }
-    copyText(tokenValue).then(function () {
-      flashButtonText("tokenCopyBtn", "已复制", "复制");
-    }).catch(function () {
-      setTextAndSelect("tokenDisplay", tokenValue);
-      setActionFeedback("warn", "令牌已选中", "当前环境不支持直接复制，请手动复制已选中的令牌。");
-    });
-  });
-
-  function runGatewayAction(action, label) {
-    setActionFeedback("warn", label + "中", "请稍候，正在调用本地动作服务。");
-    fetch(ingressUrl("action/" + action), {
-      method: "POST",
-      cache: "no-cache"
-    })
-      .then(function (r) {
-        return r.json().then(function (data) {
-          return { ok: r.ok, data: data };
-        });
-      })
-      .then(function (result) {
-        var data = result.data || {};
-        var output = data.stdout || data.stderr || "";
-        if (!result.ok || !data.ok) {
-          setActionFeedback("err", label + "失败", "请检查下方输出。", output || "无输出");
-          return;
-        }
-        setActionFeedback("ok", label + "完成", "命令执行成功。", output || "");
-        if (action === "restart") {
-          setTimeout(checkGateway, 1500);
-        }
-      })
-      .catch(function () {
-        setActionFeedback("err", label + "失败", "无法访问本地动作服务。");
-      });
-  }
-
-  $("gatewayStatusBtn").addEventListener("click", function () {
-    runGatewayAction("status", "查看网关状态");
-  });
-
-  $("gatewayRestartBtn").addEventListener("click", function () {
-    runGatewayAction("restart", "重启网关");
-  });
-
-  $("checkUpdateBtn").addEventListener("click", function () {
-    setActionFeedback("warn", "检查 npm 版本中", "正在连接 npm 仓库。");
-    fetch("https://registry.npmjs.org/openclaw/latest", { cache: "no-cache" })
-      .then(function (r) {
-        if (!r.ok) { throw new Error("npm"); }
-        return r.json();
-      })
-      .then(function (d) {
-        if (d.version && d.version !== OC_VER) {
-          setActionFeedback("warn", "发现新版本", "npm 最新版本为 " + d.version + "，当前内置版本为 " + OC_VER + "。");
-        } else {
-          setActionFeedback("ok", "版本已是最新", "当前内置版本已是最新：" + OC_VER + "。");
-        }
-      })
-      .catch(function () {
-        setActionFeedback("err", "检查失败", "当前无法连接到 npm。");
-      });
-  });
-
-  Array.prototype.forEach.call(document.querySelectorAll("[data-term-cmd]"), function (btn) {
-    btn.addEventListener("click", function () {
-      injectCommandToTerminal(btn.getAttribute("data-term-cmd") || "");
-    });
-  });
-
-  var wizard = $("wizardCard");
-  if (ACCESS_MODE === "lan_https") {
-    wizard.className = "banner banner-ok";
-    wizard.textContent = "内置 HTTPS 代理已启用。如果希望手机或平板浏览器信任本地证书，请安装 CA 证书。";
-  } else if (ACCESS_MODE === "local_only") {
-    wizard.className = "banner banner-info";
-    wizard.textContent = "Gateway 当前只绑定在本机回环地址。如果需要局域网访问，请使用 lan_https 或反向代理。";
-  } else if (GATEWAY_MODE === "remote") {
-    wizard.className = "banner banner-info";
-      wizard.textContent = "这个插件当前连接的是远程网关。请确认 gateway_public_url 指向真实的远程控制界面。";
-  }
-  } */
-
-  /* active runtime block: function setHealthState(ok, message) {
-    var dot = $("statusDot");
-    var txt = $("statusText");
-    var badges = $("statusBadges");
-    if (ok) {
-      dot.className = "dot dot-green";
-      txt.textContent = message || "运行中";
-      txt.style.color = "var(--green)";
-      badges.innerHTML = '<span class="badge badge-green">网关正常</span>';
-      $("diagGateway").textContent = "正常";
-      $("diagGateway").className = "diag-ok";
-    } else {
-      dot.className = "dot dot-red";
-      txt.textContent = message || "不可用";
-      txt.style.color = "var(--red)";
-      badges.innerHTML = '<span class="badge badge-amber">检查配置</span>';
-      $("diagGateway").textContent = "不可用";
-      $("diagGateway").className = "diag-err";
-    }
-  }
-
-  if (DISK_PCT) {
-    var dp = parseInt(DISK_PCT, 10);
-    setBar("diskBar", dp);
-    if (dp >= 75) {
-      $("diskBanner").classList.remove("hidden");
-      $("diskBanner").textContent = "磁盘已使用 " + DISK_PCT + "，剩余空间 " + DISK_AVAIL + "。";
-    }
-  }
-  if (MEM_PCT) { setBar("memBar", parseInt(MEM_PCT, 10)); }
-  if (CPU_PCT) { setBar("cpuBar", parseFloat(CPU_PCT)); }
-
-  if (ACCESS_MODE === "custom") {
-    $("migrationBanner").classList.remove("hidden");
-  }
-
-  var isSecure =
-    location.protocol === "https:" ||
-    location.hostname === "localhost" ||
-    location.hostname === "127.0.0.1" ||
-    location.hostname === "::1";
-  var gwUrlIsHttps = /^https:\/\//i.test(GW_URL || "");
-  if (isSecure) {
-    $("diagSecure").textContent = "安全";
-    $("diagSecure").className = "diag-ok";
-  } else if (ACCESS_MODE === "lan_https" && gwUrlIsHttps) {
-    $("diagSecure").textContent = "入口页非安全，原生界面安全";
-    $("diagSecure").className = "diag-warn";
-    $("diagSecure").title = "当前 HA Ingress 页面本身不是安全上下文，但通过上方“打开原生 Gateway 界面”进入的 HTTPS 控制界面是安全的。";
-  } else {
-    $("diagSecure").textContent = "不安全";
-    $("diagSecure").className = "diag-err";
-  }
-
-  var modeColors = {
-    lan_https: "badge-green",
-    tailnet_https: "badge-green",
-    lan_reverse_proxy: "badge-blue",
-    local_only: "badge-gray",
-    custom: "badge-amber"
-  };
-  $("modeBadge").className = "badge " + (modeColors[ACCESS_MODE] || "badge-gray");
-  $("modeBadge").textContent = ACCESS_MODE_LABELS[ACCESS_MODE] || ACCESS_MODE;
-  $("modeBadge").title = ACCESS_MODE;
-  $("diagAccess").textContent = ACCESS_MODE_LABELS[ACCESS_MODE] || ACCESS_MODE;
-  $("diagAccess").title = ACCESS_MODE;
-  $("gatewayModeText").textContent = GATEWAY_MODE_LABELS[GATEWAY_MODE] || GATEWAY_MODE;
-  $("gatewayModeText").title = GATEWAY_MODE;
-
-  function normalizePidRow() {
-    var kept = false;
-    var rows = document.querySelectorAll(".kv");
-    rows.forEach(function (row) {
-      var badges = row.querySelectorAll(".badge");
-      if (badges.length !== 4) { return; }
-      if (!/^nginx\s+/i.test(badges[1].textContent.trim())) { return; }
-      if (!/^ttyd\s+/i.test(badges[2].textContent.trim())) { return; }
-
-      var key = row.querySelector(".kv-key");
-      if (key) { key.textContent = "PID"; }
-
-      var gwPid = badges[0].textContent.trim().split(/\s+/).pop();
-      var nginxPid = badges[1].textContent.trim().split(/\s+/).pop();
-      var ttydPid = badges[2].textContent.trim().split(/\s+/).pop();
-      var actionPid = badges[3].textContent.trim().split(/\s+/).pop();
-
-      badges[0].textContent = "Gateway " + gwPid;
-      badges[1].textContent = "nginx " + nginxPid;
-      badges[2].textContent = "ttyd " + ttydPid;
-      badges[3].textContent = "Action " + actionPid;
-      if (!kept) {
-        kept = true;
-        row.classList.remove("hidden");
-      } else {
-        row.classList.add("hidden");
-      }
-    });
-  }
-
-  function attachPidRowTemplate() {
-    return;
-  }
-
-  function normalizeLocalCopy() {
-    var guideCards = document.querySelectorAll(".guide-card");
-    if (guideCards[0]) {
-      guideCards[0].innerHTML =
-        '<h3>配置页负责</h3>' +
-        '<ul>' +
-        '<li><code>Home Assistant Token</code>、MCP、访问模式、端口等 add-on 参数</li>' +
-        '<li><code>Brave Search</code>、<code>Gemini Memory Search</code> 这类能力开关</li>' +
-        '<li>保存并重启 add-on 后自动生效</li>' +
-        '</ul>';
-    }
-    if (guideCards[1]) {
-      guideCards[1].innerHTML =
-        '<h3>终端里的 <code>openclaw onboard</code></h3>' +
-        '<ul>' +
-        '<li>登录主模型账号 / OAuth</li>' +
-        '<li>选择默认聊天模型、channels、hooks</li>' +
-        '<li>更适合首次初始化，不建议每次启动都重复操作</li>' +
-        '</ul>';
-    }
-
-    var notes = document.querySelectorAll(".mini-note");
-    if (notes[0]) {
-      notes[0].innerHTML = '建议：配置页负责 add-on 参数，<code>openclaw onboard</code> 负责 OpenClaw 自身初始化。';
-    }
-    if (notes[1]) {
-      notes[1].textContent = '这里只显示当前已启用的能力状态；未启用的 MCP / Web Search / Memory Search 会自动隐藏。';
-    }
-
-    var subtitles = document.querySelectorAll(".section-subtitle");
-    if (subtitles[0]) { subtitles[0].textContent = '配对与初始化'; }
-    if (subtitles[1]) { subtitles[1].textContent = '诊断与维护'; }
-    if (subtitles[2]) { subtitles[2].textContent = '备份与恢复'; }
-
-    var backupHint = document.querySelector('.hero-sub[style*="margin-top:6px"]');
-    if (backupHint) {
-      backupHint.innerHTML = '共享备份目录：<code>/share/openclaw-backup/latest</code>';
-    }
-  }
-
-  attachPidRowTemplate();
-  normalizePidRow();
-  normalizeLocalCopy();
-
-  if (ACCESS_MODE === "lan_https" && HTTPS_PORT) {
-    var certBtn = $("certBtn");
-    certBtn.href = "https://" + location.hostname + ":" + HTTPS_PORT + "/cert/ca.crt";
-    certBtn.classList.remove("hidden");
-  }
-
-  var mcpEl = $("diagMcp");
-  if (mcpEl) {
-    var st = mcpEl.textContent.trim().toLowerCase();
-    mcpEl.dataset.rawStatus = st;
-    if (st === "registered" || st === "enabled") {
-      mcpEl.textContent = "已注册";
-      mcpEl.className = "diag-ok";
-    } else if (st === "configured") {
-      mcpEl.textContent = "已配置";
-      mcpEl.className = "diag-warn";
-      mcpEl.title = "mcporter 配置已经存在，但启动后的验证还没完成。";
-    } else if (st === "disabled") {
-      mcpEl.textContent = "已关闭";
-      mcpEl.className = "diag-muted";
-    } else if (st === "needs-token") {
-      mcpEl.textContent = "缺少令牌";
-      mcpEl.className = "diag-warn";
-      mcpEl.title = "已经启用 auto_configure_mcp，但还没有填写 homeassistant_token。";
-    } else if (st === "mcporter-missing") {
-      mcpEl.textContent = "缺少 mcporter";
-      mcpEl.className = "diag-warn";
-      mcpEl.title = "当前镜像里没有 mcporter，因此无法自动注册 Home Assistant MCP。";
-    } else if (!st) {
-      mcpEl.textContent = "未配置";
-      mcpEl.className = "diag-muted";
-    }
-  }
-
-  if (mcpEl) {
-    var mcpRow = mcpEl.closest(".diag-row");
-    var mcpState = (mcpEl.dataset.rawStatus || "").trim().toLowerCase();
-    if (mcpRow) {
-      if (mcpState === "disabled" || !mcpState) {
-        mcpRow.classList.add("hidden");
-      } else {
-        mcpRow.classList.remove("hidden");
-      }
-    }
-  }
-
-  var webRow = $("diagWebRow");
-  var webEl = $("diagWeb");
-  if (webRow && webEl) {
-    if (WEB_SEARCH_ENABLED) {
-      webEl.textContent = WEB_SEARCH_PROVIDER || "已启用";
-      webEl.className = "diag-ok";
-      webEl.title = WEB_SEARCH_PROVIDER ? "当前启用的 web_search provider" : "Web Search 已启用";
-      webRow.classList.remove("hidden");
-    } else {
-      webRow.classList.add("hidden");
-    }
-  }
-
-  var memoryRow = $("diagMemoryRow");
-  var memoryEl = $("diagMemory");
-  if (memoryRow && memoryEl) {
-    if (MEMORY_SEARCH_ENABLED) {
-      var parts = [];
-      if (MEMORY_SEARCH_PROVIDER) { parts.push(MEMORY_SEARCH_PROVIDER); }
-      if (MEMORY_SEARCH_MODEL) { parts.push(MEMORY_SEARCH_MODEL); }
-      memoryEl.textContent = parts.length ? parts.join(" / ") : "已启用";
-      memoryEl.className = "diag-ok";
-      memoryEl.title = parts.length ? "当前启用的 memory search provider / model" : "Memory Search 已启用";
-      memoryRow.classList.remove("hidden");
-    } else {
-      memoryRow.classList.add("hidden");
-    }
-  }
-
-  var accessEl = $("diagAccess");
-  if (["lan_https", "tailnet_https", "lan_reverse_proxy"].indexOf(ACCESS_MODE) >= 0) {
-    accessEl.className = "diag-ok";
-  } else if (ACCESS_MODE === "local_only") {
-    accessEl.className = "diag-muted";
-  } else {
-    accessEl.className = "diag-warn";
-  }
-
-  if (!GW_URL) {
-    $("gatewayCopyBtn").disabled = true;
-    $("gwBtn").classList.add("hidden");
-  }
-
-  if (!TOKEN_AVAILABLE) {
-    $("tokenRow").classList.add("hidden");
-  }
-
-  if (GATEWAY_MODE === "remote") {
-    setButtonState("gatewayStatusBtn", true);
-    setButtonState("gatewayRestartBtn", true);
-  }
-
-  async function checkGateway() {
-    if (GATEWAY_MODE === "remote" && !GW_URL) {
-      setHealthState(false, "请设置 gateway_public_url");
-      return;
-    }
-    var url = GATEWAY_MODE === "remote" ? GW_URL + "/health" : ingressUrl("health");
-    try {
-      var res = await fetch(url, { cache: "no-cache" });
-      if (!res.ok) { throw new Error("HTTP " + res.status); }
-      var data = null;
-      try {
-        data = await res.json();
-      } catch (_parseErr) {
-        data = null;
-      }
-      if (data && data.ok === false) {
-        throw new Error(data.error || "health");
-      }
-      setHealthState(true, GATEWAY_MODE === "remote" ? "远程网关可达" : "运行中");
-    } catch (_err) {
-      setHealthState(false, GATEWAY_MODE === "remote" ? "远程网关不可达" : "不可用");
-    }
-  }
-
-  checkGateway();
-  setInterval(checkGateway, 30000);
-
-  var tokenValue = "";
-  var gwBtn = $("gwBtn");
-
-  if (gwBtn) {
-    gwBtn.addEventListener("click", function (event) {
-      if (!GW_URL || !TOKEN_AVAILABLE) { return; }
-      event.preventDefault();
-
-      function openWithToken(token) {
-        window.open(withTokenHash(gwBtn.href, token), "_blank", "noopener,noreferrer");
-      }
-
-      if (tokenValue) {
-        openWithToken(tokenValue);
-        return;
-      }
-
-      fetch(ingressUrl("token"), { cache: "no-cache" })
-        .then(function (r) {
-          if (!r.ok) { throw new Error("token"); }
-          return r.text();
-        })
-        .then(function (t) {
-          tokenValue = t.trim();
-          if (!tokenValue) { throw new Error("empty"); }
-          $("tokenDisplay").textContent = tokenValue;
-          $("tokenRevealBtn").classList.add("hidden");
-          $("tokenCopyBtn").classList.remove("hidden");
-          openWithToken(tokenValue);
-        })
-        .catch(function () {
-          setActionFeedback("warn", "未能自动附带令牌", "已退回普通打开方式。如果控制界面要求令牌，可先点击“显示”或“read token”。");
-          window.open(gwBtn.href, "_blank", "noopener,noreferrer");
-        });
-    });
-  }
-
-  $("tokenRevealBtn") && $("tokenRevealBtn").addEventListener("click", function () {
-    if (tokenValue) {
-      $("tokenDisplay").textContent = tokenValue;
-      $("tokenRevealBtn").classList.add("hidden");
-      $("tokenCopyBtn").classList.remove("hidden");
-      return;
-    }
-    fetch(ingressUrl("token"), { cache: "no-cache" })
-      .then(function (r) {
-        if (!r.ok) { throw new Error("token"); }
-        return r.text();
-      })
-      .then(function (t) {
-        tokenValue = t.trim();
-        if (!tokenValue) { throw new Error("empty"); }
-        $("tokenDisplay").textContent = tokenValue;
-        $("tokenRevealBtn").classList.add("hidden");
-        $("tokenCopyBtn").classList.remove("hidden");
-      })
-      .catch(function () {
-        setTextAndSelect("tokenDisplay", "可在终端里用 jq 读取。");
-        setActionFeedback("warn", "读取令牌失败", "可以使用下方快捷命令“read token”，或在终端中手动读取。");
-      });
-  });
-
-  $("tokenCopyBtn") && $("tokenCopyBtn").addEventListener("click", function () {
-    if (!tokenValue) { return; }
-    copyText(tokenValue)
-      .then(function () {
-        flashButtonText("tokenCopyBtn", "已复制", "复制");
-      })
-      .catch(function () {
-        setTextAndSelect("tokenDisplay", tokenValue);
-        setActionFeedback("warn", "令牌复制失败", "已为你选中令牌文本，请手动复制。");
-      });
-  });
-
-  $("gatewayCopyBtn").addEventListener("click", function () {
-    if (!GW_URL) { return; }
-    copyText(GW_URL)
-      .then(function () {
-        flashButtonText("gatewayCopyBtn", "已复制", "复制");
-      })
-      .catch(function () {
-        setTextAndSelect("gatewayUrlText", GW_URL);
-        setActionFeedback("warn", "地址复制失败", "已为你选中网关地址，请手动复制。");
-      });
-  });
-
-  $("gatewayUrlText").addEventListener("click", function () {
-    if (!GW_URL) { return; }
-    copyText(GW_URL).then(function () {
-      flashButtonText("gatewayCopyBtn", "已复制", "复制");
-    }).catch(function () {
-      setTextAndSelect("gatewayUrlText", GW_URL);
-      setActionFeedback("warn", "地址已选中", "当前环境不支持直接复制，请手动复制已选中的地址。");
-    });
-  });
-
-  $("tokenDisplay").addEventListener("click", function () {
-    if (!tokenValue) {
-      selectText($("tokenDisplay"));
-      return;
-    }
-    copyText(tokenValue).then(function () {
-      flashButtonText("tokenCopyBtn", "已复制", "复制");
-    }).catch(function () {
-      setTextAndSelect("tokenDisplay", tokenValue);
-      setActionFeedback("warn", "令牌已选中", "当前环境不支持直接复制，请手动复制已选中的令牌。");
-    });
-  });
-
-  function runGatewayAction(action, label) {
-    setActionFeedback("warn", label + "中", "请稍候，正在调用本地动作服务。");
-    fetch(ingressUrl("action/" + action), {
-      method: "POST",
-      cache: "no-cache"
-    })
-      .then(function (r) {
-        return r.json().then(function (data) {
-          return { ok: r.ok, data: data };
-        });
-      })
-      .then(function (result) {
-        var data = result.data || {};
-        var output = data.stdout || data.stderr || "";
-        if (!result.ok || !data.ok) {
-          setActionFeedback("err", label + "失败", "请检查下方输出。", output || "无输出");
-          return;
-        }
-        setActionFeedback("ok", label + "完成", "命令执行成功。", output || "");
-        if (action === "restart") {
-          setTimeout(checkGateway, 1500);
-        }
-      })
-      .catch(function () {
-        setActionFeedback("err", label + "失败", "无法访问本地动作服务。");
-      });
-  }
-
-  $("gatewayStatusBtn").addEventListener("click", function () {
-    runGatewayAction("status", "查看网关状态");
-  });
-
-  $("gatewayRestartBtn").addEventListener("click", function () {
-    runGatewayAction("restart", "重启网关");
-  });
-
-  $("checkUpdateBtn").addEventListener("click", function () {
-    setActionFeedback("warn", "检查 npm 版本中", "正在连接 npm 仓库。");
-    fetch("https://registry.npmjs.org/openclaw/latest", { cache: "no-cache" })
-      .then(function (r) {
-        if (!r.ok) { throw new Error("npm"); }
-        return r.json();
-      })
-      .then(function (d) {
-        if (d.version && d.version !== OC_VER) {
-          setActionFeedback("warn", "发现新版本", "npm 最新版本为 " + d.version + "，当前内置版本为 " + OC_VER + "。");
-        } else {
-          setActionFeedback("ok", "版本已是最新", "当前内置版本已是最新：" + OC_VER + "。");
-        }
-      })
-      .catch(function () {
-        setActionFeedback("err", "检查失败", "当前无法连接到 npm。");
-      });
-  });
-
-  Array.prototype.forEach.call(document.querySelectorAll("[data-term-cmd]"), function (btn) {
-    btn.addEventListener("click", function () {
-      injectCommandToTerminal(btn.getAttribute("data-term-cmd") || "");
-    });
-  });
-
-  var wizard = $("wizardCard");
-  if (ACCESS_MODE === "lan_https") {
-    wizard.className = "banner banner-ok";
-    wizard.textContent = "内置 HTTPS 代理已启用。如果希望手机或平板浏览器信任本地证书，请安装 CA 证书。";
-  } else if (ACCESS_MODE === "local_only") {
-    wizard.className = "banner banner-info";
-    wizard.textContent = "Gateway 当前只绑定在本机回环地址。如果需要局域网访问，请使用 lan_https 或反向代理。";
-  } else if (GATEWAY_MODE === "remote") {
-    wizard.className = "banner banner-info";
-    wizard.textContent = "这个插件当前连接的是远程网关。请确认 gateway_public_url 指向真实的远程控制界面。";
-  }
-  } */
 
   function setHealthState(ok, message) {
     var dot = $("statusDot");
     var txt = $("statusText");
     var badges = $("statusBadges");
-    if (ok) {
-      dot.className = "dot dot-green";
-      txt.textContent = message || "\u8fd0\u884c\u4e2d";
-      txt.style.color = "var(--green)";
-      badges.innerHTML = '<span class="badge badge-green">\u7f51\u5173\u6b63\u5e38</span>';
-      $("diagGateway").textContent = "\u6b63\u5e38";
-      $("diagGateway").className = "diag-ok";
-    } else {
-      dot.className = "dot dot-red";
-      txt.textContent = message || "\u4e0d\u53ef\u7528";
-      txt.style.color = "var(--red)";
-      badges.innerHTML = '<span class="badge badge-amber">\u68c0\u67e5\u914d\u7f6e</span>';
-      $("diagGateway").textContent = "\u4e0d\u53ef\u7528";
-      $("diagGateway").className = "diag-err";
+    var diag = $("diagGateway");
+    if (dot) {
+      dot.className = ok ? "dot dot-green" : "dot dot-red";
+    }
+    if (txt) {
+      txt.textContent = message || (ok ? "\u8fd0\u884c\u4e2d" : "\u4e0d\u53ef\u7528");
+      txt.style.color = ok ? "var(--green)" : "var(--red)";
+    }
+    if (badges) {
+      badges.innerHTML = ok
+        ? '<span class="badge badge-green">\u7f51\u5173\u6b63\u5e38</span>'
+        : '<span class="badge badge-amber">\u8bf7\u68c0\u67e5\u914d\u7f6e</span>';
+    }
+    if (diag) {
+      diag.textContent = ok ? "\u6b63\u5e38" : "\u4e0d\u53ef\u7528";
+      diag.className = ok ? "diag-ok" : "diag-err";
     }
   }
 
-  if (DISK_PCT) {
-    var dp = parseInt(DISK_PCT, 10);
-    setBar("diskBar", dp);
-    if (dp >= 75) {
-      $("diskBanner").classList.remove("hidden");
-      $("diskBanner").textContent = "\u78c1\u76d8\u5df2\u4f7f\u7528 " + DISK_PCT + "\uff0c\u5269\u4f59\u7a7a\u95f4 " + DISK_AVAIL + "\u3002";
+  function setActionFeedback() {
+    var panel = $("actionPanel");
+    if (panel) {
+      panel.classList.add("hidden");
     }
   }
-  if (MEM_PCT) { setBar("memBar", parseInt(MEM_PCT, 10)); }
-  if (CPU_PCT) { setBar("cpuBar", parseFloat(CPU_PCT)); }
 
-  if (ACCESS_MODE === "custom") {
-    $("migrationBanner").classList.remove("hidden");
+  function ensureTerminalReady() {
+    var frame = $("termFrame");
+    var placeholder = $("termPlaceholder");
+    var loadBtn = $("termLoadBtn");
+    if (!frame) {
+      return Promise.reject(new Error("missing-frame"));
+    }
+    if (frame.dataset.loaded === "true") {
+      return Promise.resolve(frame);
+    }
+    if (terminalLoading) {
+      return terminalLoading;
+    }
+    terminalLoading = new Promise(function (resolve) {
+      function markReady() {
+        frame.dataset.loaded = "true";
+        frame.classList.remove("hidden");
+        if (placeholder) {
+          placeholder.classList.add("hidden");
+        }
+        resolve(frame);
+      }
+
+      if (placeholder) {
+        var strong = placeholder.querySelector("strong");
+        var hint = placeholder.querySelector("span");
+        if (strong) {
+          strong.textContent = "\u6b63\u5728\u52a0\u8f7d\u7ec8\u7aef";
+        }
+        if (hint) {
+          hint.textContent = "\u9996\u6b21\u52a0\u8f7d\u53ef\u80fd\u9700\u8981\u51e0\u79d2\uff0c\u5b8c\u6210\u540e\u4f1a\u81ea\u52a8\u5207\u6362\u5230\u5185\u5d4c\u7ec8\u7aef\u3002";
+        }
+      }
+      if (loadBtn) {
+        loadBtn.disabled = true;
+      }
+
+      frame.addEventListener("load", function handleLoad() {
+        frame.removeEventListener("load", handleLoad);
+        markReady();
+      }, { once: true });
+      frame.src = frame.getAttribute("data-src") || "./terminal/";
+      setTimeout(function () {
+        if (frame.dataset.loaded !== "true") {
+          markReady();
+        }
+      }, 2500);
+    }).finally(function () {
+      var btn = $("termLoadBtn");
+      if (btn) {
+        btn.disabled = false;
+      }
+    });
+    return terminalLoading;
   }
 
-  var isSecure =
-    location.protocol === "https:" ||
-    location.hostname === "localhost" ||
-    location.hostname === "127.0.0.1" ||
-    location.hostname === "::1";
-  var gwUrlIsHttps = /^https:\/\//i.test(GW_URL || "");
-  if (isSecure) {
-    $("diagSecure").textContent = "\u5b89\u5168";
-    $("diagSecure").className = "diag-ok";
-  } else if (ACCESS_MODE === "lan_https" && gwUrlIsHttps) {
-    $("diagSecure").textContent = "\u5165\u53e3\u9875\u975e\u5b89\u5168\uff0c\u539f\u751f\u754c\u9762\u5b89\u5168";
-    $("diagSecure").className = "diag-warn";
-    $("diagSecure").title = "\u5f53\u524d HA Ingress \u9875\u9762\u672c\u8eab\u4e0d\u662f\u5b89\u5168\u4e0a\u4e0b\u6587\uff0c\u4f46\u901a\u8fc7\u4e0a\u65b9\u201c\u6253\u5f00\u539f\u751f Gateway \u754c\u9762\u201d\u8fdb\u5165\u7684 HTTPS \u63a7\u5236\u754c\u9762\u662f\u5b89\u5168\u7684\u3002";
-  } else {
-    $("diagSecure").textContent = "\u4e0d\u5b89\u5168";
-    $("diagSecure").className = "diag-err";
+  function injectCommandToTerminal(command, submit) {
+    var frame = $("termFrame");
+    ensureTerminalReady()
+      .then(function () {
+        if (!frame || !frame.contentWindow) {
+          throw new Error("terminal-not-ready");
+        }
+        var input = findTerminalTextarea(frame.contentWindow.document);
+        if (!input) {
+          throw new Error("terminal-input");
+        }
+        var payload = String(command || "");
+        if (submit && !/\n$/.test(payload)) {
+          payload += "\n";
+        }
+        frame.contentWindow.focus();
+        input.focus();
+        input.value = payload;
+        input.dispatchEvent(new InputEvent("input", {
+          bubbles: true,
+          cancelable: true,
+          data: payload,
+          inputType: "insertText"
+        }));
+        setActionFeedback();
+      })
+      .catch(function () {});
   }
-
-  var modeColors = {
-    lan_https: "badge-green",
-    tailnet_https: "badge-green",
-    lan_reverse_proxy: "badge-blue",
-    local_only: "badge-gray",
-    custom: "badge-amber"
-  };
-  $("modeBadge").className = "badge " + (modeColors[ACCESS_MODE] || "badge-gray");
-  $("modeBadge").textContent = ACCESS_MODE_LABELS[ACCESS_MODE] || ACCESS_MODE;
-  $("modeBadge").title = ACCESS_MODE;
-  $("diagAccess").textContent = ACCESS_MODE_LABELS[ACCESS_MODE] || ACCESS_MODE;
-  $("diagAccess").title = ACCESS_MODE;
-  $("gatewayModeText").textContent = GATEWAY_MODE_LABELS[GATEWAY_MODE] || GATEWAY_MODE;
-  $("gatewayModeText").title = GATEWAY_MODE;
 
   function normalizePidRow() {
     var kept = false;
-    var rows = document.querySelectorAll(".kv");
-    rows.forEach(function (row) {
+    Array.prototype.forEach.call(document.querySelectorAll(".kv"), function (row) {
       var badges = row.querySelectorAll(".badge");
-      if (badges.length !== 4) { return; }
-      if (!/^nginx\s+/i.test(badges[1].textContent.trim())) { return; }
-      if (!/^ttyd\s+/i.test(badges[2].textContent.trim())) { return; }
-
+      if (badges.length !== 4) {
+        return;
+      }
+      if (!/^nginx\s+/i.test(badges[1].textContent.trim()) || !/^ttyd\s+/i.test(badges[2].textContent.trim())) {
+        return;
+      }
       var key = row.querySelector(".kv-key");
-      if (key) { key.textContent = "PID"; }
-
-      var gwPid = badges[0].textContent.trim().split(/\s+/).pop();
-      var nginxPid = badges[1].textContent.trim().split(/\s+/).pop();
-      var ttydPid = badges[2].textContent.trim().split(/\s+/).pop();
-      var actionPid = badges[3].textContent.trim().split(/\s+/).pop();
-
-      badges[0].textContent = "Gateway " + gwPid;
-      badges[1].textContent = "nginx " + nginxPid;
-      badges[2].textContent = "ttyd " + ttydPid;
-      badges[3].textContent = "Action " + actionPid;
+      if (key) {
+        key.textContent = "PID";
+      }
+      badges[0].textContent = "Gateway " + badges[0].textContent.trim().split(/\s+/).pop();
+      badges[1].textContent = "nginx " + badges[1].textContent.trim().split(/\s+/).pop();
+      badges[2].textContent = "ttyd " + badges[2].textContent.trim().split(/\s+/).pop();
+      badges[3].textContent = "Action " + badges[3].textContent.trim().split(/\s+/).pop();
       if (!kept) {
         kept = true;
         row.classList.remove("hidden");
@@ -1905,274 +1002,420 @@ openclaw devices approve &lt;requestId&gt;</pre>
     });
   }
 
-  normalizePidRow();
+  function normalizeLocalCopy() {
+    var guideCards = document.querySelectorAll(".guide-card");
+    if (guideCards[0]) {
+      guideCards[0].innerHTML =
+        "<h3>\u914d\u7f6e\u9875\u8d1f\u8d23</h3>" +
+        "<ul>" +
+        "<li><code>Home Assistant Token</code>\u3001MCP\u3001\u8bbf\u95ee\u6a21\u5f0f\u3001\u7aef\u53e3\u7b49 add-on \u53c2\u6570</li>" +
+        "<li><code>Brave Search</code>\u3001<code>Gemini Memory Search</code> \u8fd9\u7c7b\u80fd\u529b\u5f00\u5173</li>" +
+        "<li>\u4fdd\u5b58\u5e76\u91cd\u542f add-on \u540e\u81ea\u52a8\u751f\u6548</li>" +
+        "</ul>";
+    }
+    if (guideCards[1]) {
+      guideCards[1].innerHTML =
+        "<h3>\u7ec8\u7aef\u91cc\u7684 <code>openclaw onboard</code></h3>" +
+        "<ul>" +
+        "<li>\u767b\u5f55\u4e3b\u6a21\u578b\u8d26\u53f7 / OAuth</li>" +
+        "<li>\u9009\u62e9\u9ed8\u8ba4\u804a\u5929\u6a21\u578b\u3001channels\u3001hooks</li>" +
+        "<li>\u66f4\u9002\u5408\u9996\u6b21\u521d\u59cb\u5316\uff0c\u4e0d\u5efa\u8bae\u6bcf\u6b21\u542f\u52a8\u90fd\u91cd\u590d\u64cd\u4f5c</li>" +
+        "</ul>";
+    }
 
-  if (ACCESS_MODE === "lan_https" && HTTPS_PORT) {
+    var notes = document.querySelectorAll(".mini-note");
+    if (notes[0]) {
+      notes[0].innerHTML = "\u5efa\u8bae\uff1a\u914d\u7f6e\u9875\u8d1f\u8d23 add-on \u53c2\u6570\uff0c<code>openclaw onboard</code> \u8d1f\u8d23 OpenClaw \u81ea\u8eab\u521d\u59cb\u5316\u3002";
+    }
+    if (notes[1]) {
+      notes[1].textContent = "\u8fd9\u91cc\u53ea\u663e\u793a\u5f53\u524d\u5df2\u542f\u7528\u7684\u80fd\u529b\u72b6\u6001\uff1b\u672a\u542f\u7528\u7684 MCP / Web Search / Memory Search \u4f1a\u81ea\u52a8\u9690\u85cf\u3002";
+    }
+
+    var subtitles = document.querySelectorAll(".section-subtitle");
+    if (subtitles[0]) { subtitles[0].textContent = "\u914d\u5bf9\u4e0e\u521d\u59cb\u5316"; }
+    if (subtitles[1]) { subtitles[1].textContent = "\u8bca\u65ad\u4e0e\u7ef4\u62a4"; }
+    if (subtitles[2]) { subtitles[2].textContent = "\u5907\u4efd\u4e0e\u6062\u590d"; }
+  }
+
+  function updateStaticView() {
+    var diskPct = parseInt(DISK_PCT, 10);
+    var memPct = parseInt(MEM_PCT, 10);
+    var cpuPct = parseFloat(CPU_PCT);
+    var modeBadge = $("modeBadge");
+    var diagAccess = $("diagAccess");
+    var gatewayModeText = $("gatewayModeText");
+    var secureEl = $("diagSecure");
     var certBtn = $("certBtn");
-    if (certBtn) {
-      certBtn.href = "https://" + location.hostname + ":" + HTTPS_PORT + "/cert/ca.crt";
+    var accessEl = $("diagAccess");
+    var gatewayCopyBtn = $("gatewayCopyBtn");
+    var tokenRow = $("tokenRow");
+    var gwBtn = $("gwBtn");
+
+    setBar("diskBar", diskPct);
+    setBar("memBar", memPct);
+    setBar("cpuBar", cpuPct);
+
+    if (!Number.isNaN(diskPct) && diskPct >= 75 && $("diskBanner")) {
+      $("diskBanner").classList.remove("hidden");
+      $("diskBanner").textContent = "\u78c1\u76d8\u5df2\u4f7f\u7528 " + DISK_PCT + "%\uff0c\u5269\u4f59\u7a7a\u95f4 " + DISK_AVAIL + "\u3002";
+    }
+    if (ACCESS_MODE === "custom" && $("migrationBanner")) {
+      $("migrationBanner").classList.remove("hidden");
+    }
+
+    if (modeBadge) {
+      var modeColors = {
+        lan_https: "badge-green",
+        tailnet_https: "badge-green",
+        lan_reverse_proxy: "badge-blue",
+        local_only: "badge-gray",
+        custom: "badge-amber"
+      };
+      modeBadge.className = "badge " + (modeColors[ACCESS_MODE] || "badge-gray");
+      modeBadge.textContent = ACCESS_MODE_LABELS[ACCESS_MODE] || ACCESS_MODE;
+      modeBadge.title = ACCESS_MODE;
+    }
+    if (diagAccess) {
+      diagAccess.textContent = ACCESS_MODE_LABELS[ACCESS_MODE] || ACCESS_MODE;
+      diagAccess.title = ACCESS_MODE;
+    }
+    if (gatewayModeText) {
+      gatewayModeText.textContent = GATEWAY_MODE_LABELS[GATEWAY_MODE] || GATEWAY_MODE;
+      gatewayModeText.title = GATEWAY_MODE;
+    }
+
+    var isSecure =
+      location.protocol === "https:" ||
+      location.hostname === "localhost" ||
+      location.hostname === "127.0.0.1" ||
+      location.hostname === "::1";
+    var gwUrlIsHttps = /^https:\/\//i.test(GW_URL || "");
+    if (secureEl) {
+      if (isSecure) {
+        secureEl.textContent = "\u5b89\u5168";
+        secureEl.className = "diag-ok";
+      } else if (ACCESS_MODE === "lan_https" && gwUrlIsHttps) {
+        secureEl.textContent = "\u5165\u53e3\u9875\u975e\u5b89\u5168\uff0c\u539f\u751f\u754c\u9762\u5b89\u5168";
+        secureEl.className = "diag-warn";
+        secureEl.title = "\u5f53\u524d HA Ingress \u9875\u9762\u672c\u8eab\u4e0d\u662f\u5b89\u5168\u4e0a\u4e0b\u6587\uff0c\u4f46\u901a\u8fc7\u4e0a\u65b9\u201c\u6253\u5f00\u539f\u751f Gateway \u754c\u9762\u201d\u8fdb\u5165\u7684 HTTPS \u63a7\u5236\u754c\u9762\u662f\u5b89\u5168\u7684\u3002";
+      } else {
+        secureEl.textContent = "\u4e0d\u5b89\u5168";
+        secureEl.className = "diag-err";
+      }
+    }
+
+    if (accessEl) {
+      if (["lan_https", "tailnet_https", "lan_reverse_proxy"].indexOf(ACCESS_MODE) >= 0) {
+        accessEl.className = "diag-ok";
+      } else if (ACCESS_MODE === "local_only") {
+        accessEl.className = "diag-muted";
+      } else {
+        accessEl.className = "diag-warn";
+      }
+    }
+
+    if (ACCESS_MODE === "lan_https" && HTTPS_PORT && certBtn) {
+      certBtn.href = "https://" + location.hostname + ":" + HTTPS_PORT + "/openclaw-ca.crt";
       certBtn.classList.remove("hidden");
     }
-  }
 
-  var mcpEl = $("diagMcp");
-  if (mcpEl) {
-    var st = mcpEl.textContent.trim().toLowerCase();
-    mcpEl.dataset.rawStatus = st;
-    if (st === "registered" || st === "enabled") {
-      mcpEl.textContent = "\u5df2\u6ce8\u518c";
-      mcpEl.className = "diag-ok";
-    } else if (st === "configured") {
-      mcpEl.textContent = "\u5df2\u914d\u7f6e";
-      mcpEl.className = "diag-warn";
-      mcpEl.title = "mcporter \u914d\u7f6e\u5df2\u7ecf\u5b58\u5728\uff0c\u4f46\u542f\u52a8\u540e\u7684\u9a8c\u8bc1\u8fd8\u6ca1\u5b8c\u6210\u3002";
-    } else if (st === "disabled") {
-      mcpEl.textContent = "\u5df2\u5173\u95ed";
-      mcpEl.className = "diag-muted";
-    } else if (st === "needs-token") {
-      mcpEl.textContent = "\u7f3a\u5c11\u4ee4\u724c";
-      mcpEl.className = "diag-warn";
-      mcpEl.title = "\u5df2\u7ecf\u542f\u7528 auto_configure_mcp\uff0c\u4f46\u8fd8\u6ca1\u6709\u586b\u5199 homeassistant_token\u3002";
-    } else if (st === "mcporter-missing") {
-      mcpEl.textContent = "\u7f3a\u5c11 mcporter";
-      mcpEl.className = "diag-warn";
-      mcpEl.title = "\u5f53\u524d\u955c\u50cf\u91cc\u6ca1\u6709 mcporter\uff0c\u56e0\u6b64\u65e0\u6cd5\u81ea\u52a8\u6ce8\u518c Home Assistant MCP\u3002";
-    } else if (!st) {
-      mcpEl.textContent = "\u672a\u914d\u7f6e";
-      mcpEl.className = "diag-muted";
+    if (!GW_URL) {
+      if (gatewayCopyBtn) {
+        gatewayCopyBtn.disabled = true;
+      }
+      if (gwBtn) {
+        gwBtn.classList.add("hidden");
+      }
+    }
+    if (!TOKEN_AVAILABLE && tokenRow) {
+      tokenRow.classList.add("hidden");
+    }
+    if (GATEWAY_MODE === "remote") {
+      setButtonState("gatewayStatusBtn", true);
+      setButtonState("gatewayRestartBtn", true);
+    }
+    if ($("gatewayUrlText")) {
+      $("gatewayUrlText").textContent = GW_URL || "-";
+      $("gatewayUrlText").title = GW_URL || "";
     }
   }
 
-  if (mcpEl) {
-    var mcpRow = mcpEl.closest(".diag-row");
-    var mcpState = (mcpEl.dataset.rawStatus || "").trim().toLowerCase();
-    if (mcpRow) {
-      if (mcpState === "disabled" || !mcpState) {
-        mcpRow.classList.add("hidden");
+  function updateDiagSections() {
+    var mcpEl = $("diagMcp");
+    var webRow = $("diagWebRow");
+    var webEl = $("diagWeb");
+    var memoryRow = $("diagMemoryRow");
+    var memoryEl = $("diagMemory");
+
+    if (mcpEl) {
+      var raw = String(mcpEl.textContent || "").trim().toLowerCase();
+      var mcpRow = mcpEl.closest(".diag-row");
+      if (raw === "registered" || raw === "enabled") {
+        mcpEl.textContent = "\u5df2\u6ce8\u518c";
+        mcpEl.className = "diag-ok";
+      } else if (raw === "configured") {
+        mcpEl.textContent = "\u5df2\u914d\u7f6e\u5f85\u9a8c\u8bc1";
+        mcpEl.className = "diag-warn";
+      } else if (raw === "needs-token") {
+        mcpEl.textContent = "\u7f3a\u5c11\u4ee4\u724c";
+        mcpEl.className = "diag-warn";
+      } else if (raw === "mcporter-missing") {
+        mcpEl.textContent = "\u7f3a\u5c11 mcporter";
+        mcpEl.className = "diag-warn";
+      } else if (raw === "disabled" || !raw) {
+        mcpEl.textContent = "\u5df2\u5173\u95ed";
+        mcpEl.className = "diag-muted";
       } else {
-        mcpRow.classList.remove("hidden");
+        mcpEl.className = "diag-muted";
+      }
+      if (mcpRow) {
+        if (raw === "disabled" || !raw) {
+          mcpRow.classList.add("hidden");
+        } else {
+          mcpRow.classList.remove("hidden");
+        }
+      }
+    }
+
+    if (webRow && webEl) {
+      if (WEB_SEARCH_ENABLED) {
+        webEl.textContent = WEB_SEARCH_PROVIDER || "\u5df2\u542f\u7528";
+        webEl.className = "diag-ok";
+        webRow.classList.remove("hidden");
+      } else {
+        webRow.classList.add("hidden");
+      }
+    }
+
+    if (memoryRow && memoryEl) {
+      if (MEMORY_SEARCH_ENABLED) {
+        var parts = [];
+        if (MEMORY_SEARCH_PROVIDER) { parts.push(MEMORY_SEARCH_PROVIDER); }
+        if (MEMORY_SEARCH_MODEL) { parts.push(MEMORY_SEARCH_MODEL); }
+        memoryEl.textContent = parts.length ? parts.join(" / ") : "\u5df2\u542f\u7528";
+        memoryEl.className = "diag-ok";
+        memoryRow.classList.remove("hidden");
+      } else {
+        memoryRow.classList.add("hidden");
       }
     }
   }
 
-  var webRow = $("diagWebRow");
-  var webEl = $("diagWeb");
-  if (webRow && webEl) {
-    if (WEB_SEARCH_ENABLED) {
-      webEl.textContent = WEB_SEARCH_PROVIDER || "\u5df2\u542f\u7528";
-      webEl.className = "diag-ok";
-      webEl.title = WEB_SEARCH_PROVIDER ? "Current web_search provider" : "Web Search enabled";
-      webRow.classList.remove("hidden");
-    } else {
-      webRow.classList.add("hidden");
-    }
-  }
-
-  var memoryRow = $("diagMemoryRow");
-  var memoryEl = $("diagMemory");
-  if (memoryRow && memoryEl) {
-    if (MEMORY_SEARCH_ENABLED) {
-      var parts = [];
-      if (MEMORY_SEARCH_PROVIDER) { parts.push(MEMORY_SEARCH_PROVIDER); }
-      if (MEMORY_SEARCH_MODEL) { parts.push(MEMORY_SEARCH_MODEL); }
-      memoryEl.textContent = parts.length ? parts.join(" / ") : "\u5df2\u542f\u7528";
-      memoryEl.className = "diag-ok";
-      memoryEl.title = parts.length ? "Current memory search provider / model" : "Memory Search enabled";
-      memoryRow.classList.remove("hidden");
-    } else {
-      memoryRow.classList.add("hidden");
-    }
-  }
-
-  var accessEl = $("diagAccess");
-  if (["lan_https", "tailnet_https", "lan_reverse_proxy"].indexOf(ACCESS_MODE) >= 0) {
-    accessEl.className = "diag-ok";
-  } else if (ACCESS_MODE === "local_only") {
-    accessEl.className = "diag-muted";
-  } else {
-    accessEl.className = "diag-warn";
-  }
-
-  if (!GW_URL) {
-    $("gatewayCopyBtn").disabled = true;
-    $("gwBtn").classList.add("hidden");
-  }
-
-  if (!TOKEN_AVAILABLE) {
-    $("tokenRow").classList.add("hidden");
-  }
-
-  if (GATEWAY_MODE === "remote") {
-    setButtonState("gatewayStatusBtn", true);
-    setButtonState("gatewayRestartBtn", true);
-  }
-
-  async function checkGateway() {
+  function checkGateway() {
     if (GATEWAY_MODE === "remote" && !GW_URL) {
-      setHealthState(false, "Please set gateway_public_url");
-      return;
+      setHealthState(false, "\u8bf7\u8bbe\u7f6e gateway_public_url");
+      return Promise.resolve();
     }
-    var url = GATEWAY_MODE === "remote" ? GW_URL + "/health" : ingressUrl("health");
-    try {
-      var res = await fetch(url, { cache: "no-cache" });
-      if (!res.ok) { throw new Error("HTTP " + res.status); }
-      var data = null;
-      try {
-        data = await res.json();
-      } catch (_parseErr) {
-        data = null;
-      }
-      if (data && data.ok === false) {
-        throw new Error(data.error || "health");
-      }
-      setHealthState(true, GATEWAY_MODE === "remote" ? "\u8fdc\u7a0b\u7f51\u5173\u53ef\u8fbe" : "\u8fd0\u884c\u4e2d");
-    } catch (_err) {
-      setHealthState(false, GATEWAY_MODE === "remote" ? "\u8fdc\u7a0b\u7f51\u5173\u4e0d\u53ef\u8fbe" : "\u4e0d\u53ef\u7528");
-    }
+    var url = GATEWAY_MODE === "remote" ? GW_URL.replace(/\/$/, "") + "/health" : ingressUrl("health");
+    return fetch(url, { cache: "no-cache" })
+      .then(function (res) {
+        if (!res.ok) {
+          throw new Error("HTTP " + res.status);
+        }
+        return res.json().catch(function () { return null; });
+      })
+      .then(function (data) {
+        if (data && data.ok === false) {
+          throw new Error(data.error || "health");
+        }
+        setHealthState(true, GATEWAY_MODE === "remote" ? "\u8fdc\u7a0b\u7f51\u5173\u53ef\u8fbe" : "\u8fd0\u884c\u4e2d");
+      })
+      .catch(function () {
+        setHealthState(false, GATEWAY_MODE === "remote" ? "\u8fdc\u7a0b\u7f51\u5173\u4e0d\u53ef\u8fbe" : "\u4e0d\u53ef\u7528");
+      });
   }
 
-  checkGateway();
-  setInterval(checkGateway, 30000);
-
-  var tokenValue = "";
-  var gwBtn = $("gwBtn");
-
-  if (gwBtn) {
-    gwBtn.addEventListener("click", function (event) {
-      if (!GW_URL || !TOKEN_AVAILABLE) { return; }
-      event.preventDefault();
-
-      function openWithToken(token) {
-        window.open(withTokenHash(gwBtn.href, token), "_blank", "noopener,noreferrer");
-      }
-
-      if (tokenValue) {
-        openWithToken(tokenValue);
+  function scheduleGatewayPoll(delay) {
+    if (gatewayPollTimer) {
+      clearTimeout(gatewayPollTimer);
+    }
+    gatewayPollTimer = setTimeout(function () {
+      if (document.hidden) {
+        scheduleGatewayPoll(30000);
         return;
       }
-
-      fetch(ingressUrl("token"), { cache: "no-cache" })
-        .then(function (r) {
-          if (!r.ok) { throw new Error("token"); }
-          return r.text();
-        })
-        .then(function (t) {
-          tokenValue = t.trim();
-          if (!tokenValue) { throw new Error("empty"); }
-          $("tokenDisplay").textContent = tokenValue;
-          $("tokenRevealBtn").classList.add("hidden");
-          $("tokenCopyBtn").classList.remove("hidden");
-          openWithToken(tokenValue);
-        })
-        .catch(function () {
-          setActionFeedback("warn", "\u672a\u80fd\u81ea\u52a8\u9644\u5e26\u4ee4\u724c", "\u5df2\u9000\u56de\u666e\u901a\u6253\u5f00\u65b9\u5f0f\u3002\u5982\u679c\u63a7\u5236\u754c\u9762\u8981\u6c42\u4ee4\u724c\uff0c\u53ef\u5148\u70b9\u51fb\u201c\u663e\u793a\u201d\u6216\u201cread token\u201d\u3002");
-          window.open(gwBtn.href, "_blank", "noopener,noreferrer");
-        });
-    });
+      checkGateway().finally(function () {
+        scheduleGatewayPoll(30000);
+      });
+    }, delay);
   }
 
-  $("tokenRevealBtn") && $("tokenRevealBtn").addEventListener("click", function () {
+  function setupWizardCard() {
+    var wizard = $("wizardCard");
+    if (!wizard) {
+      return;
+    }
+    if (ACCESS_MODE === "lan_https") {
+      wizard.className = "banner banner-ok";
+      wizard.textContent = "\u5185\u7f6e HTTPS \u4ee3\u7406\u5df2\u542f\u7528\u3002\u5982\u679c\u5e0c\u671b\u624b\u673a\u6216\u5e73\u677f\u6d4f\u89c8\u5668\u4fe1\u4efb\u672c\u5730\u8bc1\u4e66\uff0c\u8bf7\u5b89\u88c5 CA \u8bc1\u4e66\u3002";
+    } else if (GATEWAY_MODE === "local") {
+      wizard.className = "banner banner-info";
+      wizard.textContent = "Gateway \u5f53\u524d\u53ea\u7ed1\u5b9a\u5728\u672c\u673a\u56de\u73af\u5730\u5740\u3002\u5982\u679c\u9700\u8981\u5c40\u57df\u7f51\u8bbf\u95ee\uff0c\u8bf7\u4f7f\u7528 lan_https \u6216\u53cd\u5411\u4ee3\u7406\u3002";
+    } else {
+      wizard.className = "banner banner-info";
+      wizard.textContent = "\u8fd9\u4e2a\u63d2\u4ef6\u5f53\u524d\u8fde\u63a5\u7684\u662f\u8fdc\u7a0b\u7f51\u5173\u3002\u8bf7\u786e\u8ba4 gateway_public_url \u6307\u5411\u771f\u5b9e\u7684\u8fdc\u7a0b\u63a7\u5236\u754c\u9762\u3002";
+    }
+    wizard.classList.remove("hidden");
+  }
+
+  function fetchToken() {
     if (tokenValue) {
-      $("tokenDisplay").textContent = tokenValue;
-      $("tokenRevealBtn").classList.add("hidden");
-      $("tokenCopyBtn").classList.remove("hidden");
-      return;
+      return Promise.resolve(tokenValue);
     }
-    fetch(ingressUrl("token"), { cache: "no-cache" })
-      .then(function (r) {
-        if (!r.ok) { throw new Error("token"); }
-        return r.text();
+    return fetch(ingressUrl("token"), { cache: "no-cache" })
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error("token");
+        }
+        return response.text();
       })
-      .then(function (t) {
-        tokenValue = t.trim();
-        if (!tokenValue) { throw new Error("empty"); }
-        $("tokenDisplay").textContent = tokenValue;
-        $("tokenRevealBtn").classList.add("hidden");
-        $("tokenCopyBtn").classList.remove("hidden");
-      })
-      .catch(function () {
-        setTextAndSelect("tokenDisplay", "Use jq in terminal to read the token.");
-        setActionFeedback("warn", "\u8bfb\u53d6\u4ee4\u724c\u5931\u8d25", "\u53ef\u4ee5\u4f7f\u7528\u4e0b\u65b9\u5feb\u6377\u547d\u4ee4\u201cread token\u201d\uff0c\u6216\u5728\u7ec8\u7aef\u4e2d\u624b\u52a8\u8bfb\u53d6\u3002");
+      .then(function (text) {
+        tokenValue = String(text || "").trim();
+        if (!tokenValue) {
+          throw new Error("empty");
+        }
+        if ($("tokenDisplay")) {
+          $("tokenDisplay").textContent = tokenValue;
+        }
+        if ($("tokenRevealBtn")) {
+          $("tokenRevealBtn").classList.add("hidden");
+        }
+        if ($("tokenCopyBtn")) {
+          $("tokenCopyBtn").classList.remove("hidden");
+        }
+        return tokenValue;
       });
-  });
-
-  $("tokenCopyBtn") && $("tokenCopyBtn").addEventListener("click", function () {
-    if (!tokenValue) { return; }
-    copyText(tokenValue)
-      .then(function () {
-        flashButtonText("tokenCopyBtn", "\u5df2\u590d\u5236", "\u590d\u5236");
-      })
-      .catch(function () {
-        setTextAndSelect("tokenDisplay", tokenValue);
-        setActionFeedback("warn", "\u4ee4\u724c\u590d\u5236\u5931\u8d25", "\u5df2\u4e3a\u4f60\u9009\u4e2d\u4ee4\u724c\u6587\u672c\uff0c\u8bf7\u624b\u52a8\u590d\u5236\u3002");
-      });
-  });
-
-  $("gatewayCopyBtn").addEventListener("click", function () {
-    if (!GW_URL) { return; }
-    copyText(GW_URL)
-      .then(function () {
-        flashButtonText("gatewayCopyBtn", "\u5df2\u590d\u5236", "\u590d\u5236");
-      })
-      .catch(function () {
-        setTextAndSelect("gatewayUrlText", GW_URL);
-        setActionFeedback("warn", "\u5730\u5740\u590d\u5236\u5931\u8d25", "\u5df2\u4e3a\u4f60\u9009\u4e2d\u7f51\u5173\u5730\u5740\uff0c\u8bf7\u624b\u52a8\u590d\u5236\u3002");
-      });
-  });
-
-  $("gatewayUrlText").addEventListener("click", function () {
-    if (!GW_URL) { return; }
-    copyText(GW_URL).then(function () {
-      flashButtonText("gatewayCopyBtn", "\u5df2\u590d\u5236", "\u590d\u5236");
-    }).catch(function () {
-      setTextAndSelect("gatewayUrlText", GW_URL);
-      setActionFeedback("warn", "\u5730\u5740\u5df2\u9009\u4e2d", "\u5f53\u524d\u73af\u5883\u4e0d\u652f\u6301\u76f4\u63a5\u590d\u5236\uff0c\u8bf7\u624b\u52a8\u590d\u5236\u5df2\u9009\u4e2d\u7684\u5730\u5740\u3002");
-    });
-  });
-
-  $("tokenDisplay").addEventListener("click", function () {
-    if (!tokenValue) {
-      selectText($("tokenDisplay"));
-      return;
-    }
-    copyText(tokenValue).then(function () {
-      flashButtonText("tokenCopyBtn", "\u5df2\u590d\u5236", "\u590d\u5236");
-    }).catch(function () {
-      setTextAndSelect("tokenDisplay", tokenValue);
-      setActionFeedback("warn", "\u4ee4\u724c\u5df2\u9009\u4e2d", "\u5f53\u524d\u73af\u5883\u4e0d\u652f\u6301\u76f4\u63a5\u590d\u5236\uff0c\u8bf7\u624b\u52a8\u590d\u5236\u5df2\u9009\u4e2d\u7684\u4ee4\u724c\u3002");
-    });
-  });
-
-  $("gatewayStatusBtn").addEventListener("click", function () {
-    injectCommandToTerminal("openclaw gateway status --deep", true);
-  });
-
-  $("gatewayRestartBtn").addEventListener("click", function () {
-    injectCommandToTerminal("openclaw gateway restart", true);
-  });
-
-  $("checkUpdateBtn").addEventListener("click", function () {
-    injectCommandToTerminal("curl -fsSL https://registry.npmjs.org/openclaw/latest | jq -r '\"npm latest: \" + .version'", true);
-  });
-
-  Array.prototype.forEach.call(document.querySelectorAll("[data-term-cmd]"), function (btn) {
-    btn.addEventListener("click", function () {
-      injectCommandToTerminal(btn.getAttribute("data-term-cmd") || "");
-    });
-  });
-
-  var wizard = $("wizardCard");
-  if (ACCESS_MODE === "lan_https") {
-    wizard.className = "banner banner-ok";
-    wizard.textContent = "\u5185\u7f6e HTTPS \u4ee3\u7406\u5df2\u542f\u7528\u3002\u5982\u679c\u5e0c\u671b\u624b\u673a\u6216\u5e73\u677f\u6d4f\u89c8\u5668\u4fe1\u4efb\u672c\u5730\u8bc1\u4e66\uff0c\u8bf7\u5b89\u88c5 CA \u8bc1\u4e66\u3002";
-  } else if (ACCESS_MODE === "local_only") {
-    wizard.className = "banner banner-info";
-    wizard.textContent = "Gateway \u5f53\u524d\u53ea\u7ed1\u5b9a\u5728\u672c\u673a\u56de\u73af\u5730\u5740\u3002\u5982\u679c\u9700\u8981\u5c40\u57df\u7f51\u8bbf\u95ee\uff0c\u8bf7\u4f7f\u7528 lan_https \u6216\u53cd\u5411\u4ee3\u7406\u3002";
-  } else if (GATEWAY_MODE === "remote") {
-    wizard.className = "banner banner-info";
-    wizard.textContent = "\u8fd9\u4e2a\u63d2\u4ef6\u5f53\u524d\u8fde\u63a5\u7684\u662f\u8fdc\u7a0b\u7f51\u5173\u3002\u8bf7\u786e\u8ba4 gateway_public_url \u6307\u5411\u771f\u5b9e\u7684\u8fdc\u7a0b\u63a7\u5236\u754c\u9762\u3002";
   }
+
+  function bindEvents() {
+    var gwBtn = $("gwBtn");
+    var tokenRevealBtn = $("tokenRevealBtn");
+    var tokenCopyBtn = $("tokenCopyBtn");
+    var tokenDisplay = $("tokenDisplay");
+    var gatewayCopyBtn = $("gatewayCopyBtn");
+    var gatewayUrlText = $("gatewayUrlText");
+    var termLoadBtn = $("termLoadBtn");
+    var termPlaceholder = $("termPlaceholder");
+
+    if (gwBtn) {
+      gwBtn.addEventListener("click", function (event) {
+        if (!GW_URL || !TOKEN_AVAILABLE) {
+          return;
+        }
+        event.preventDefault();
+        fetchToken()
+          .then(function (token) {
+            window.open(withTokenHash(gwBtn.href, token), "_blank", "noopener,noreferrer");
+          })
+          .catch(function () {
+            window.open(gwBtn.href, "_blank", "noopener,noreferrer");
+          });
+      });
+    }
+
+    if (tokenRevealBtn) {
+      tokenRevealBtn.addEventListener("click", function () {
+        fetchToken().catch(function () {});
+      });
+    }
+
+    if (tokenCopyBtn) {
+      tokenCopyBtn.addEventListener("click", function () {
+        copyText(tokenValue || (tokenDisplay ? tokenDisplay.textContent : ""))
+          .then(function () { flashButtonText("tokenCopyBtn", "\u5df2\u590d\u5236", "\u590d\u5236"); })
+          .catch(function () {});
+      });
+    }
+
+    if (tokenDisplay) {
+      tokenDisplay.addEventListener("click", function () {
+        if (!tokenValue) {
+          return;
+        }
+        copyText(tokenValue)
+          .then(function () { flashButtonText("tokenCopyBtn", "\u5df2\u590d\u5236", "\u590d\u5236"); })
+          .catch(function () {});
+      });
+    }
+
+    if (gatewayCopyBtn) {
+      gatewayCopyBtn.addEventListener("click", function () {
+        if (!GW_URL) {
+          return;
+        }
+        copyText(GW_URL)
+          .then(function () {
+            flashButtonText("gatewayCopyBtn", "\u5df2\u590d\u5236", "\u590d\u5236");
+            if (gatewayUrlText) {
+              gatewayUrlText.textContent = GW_URL;
+            }
+          })
+          .catch(function () {});
+      });
+    }
+
+    if (gatewayUrlText) {
+      gatewayUrlText.addEventListener("click", function () {
+        if (!GW_URL) {
+          return;
+        }
+        copyText(GW_URL)
+          .then(function () { flashButtonText("gatewayCopyBtn", "\u5df2\u590d\u5236", "\u590d\u5236"); })
+          .catch(function () {});
+      });
+    }
+
+    if ($("gatewayStatusBtn")) {
+      $("gatewayStatusBtn").addEventListener("click", function () {
+        injectCommandToTerminal("openclaw gateway status --deep", true);
+      });
+    }
+    if ($("gatewayRestartBtn")) {
+      $("gatewayRestartBtn").addEventListener("click", function () {
+        injectCommandToTerminal("openclaw gateway restart", true);
+      });
+    }
+    if ($("checkUpdateBtn")) {
+      $("checkUpdateBtn").addEventListener("click", function () {
+        injectCommandToTerminal("curl -fsSL https://registry.npmjs.org/openclaw/latest | jq -r '\"npm latest: \" + .version'", true);
+      });
+    }
+
+    Array.prototype.forEach.call(document.querySelectorAll("[data-term-cmd]"), function (btn) {
+      btn.addEventListener("click", function () {
+        injectCommandToTerminal(btn.getAttribute("data-term-cmd") || "", false);
+      });
+    });
+
+    if (termLoadBtn) {
+      termLoadBtn.addEventListener("click", function (event) {
+        event.stopPropagation();
+        ensureTerminalReady();
+      });
+    }
+    if (termPlaceholder) {
+      termPlaceholder.addEventListener("click", function () {
+        ensureTerminalReady();
+      });
+    }
+
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) {
+        scheduleGatewayPoll(300);
+      }
+    });
+  }
+
+  normalizePidRow();
+  normalizeLocalCopy();
+  updateStaticView();
+  updateDiagSections();
+  setupWizardCard();
+  bindEvents();
+  checkGateway();
+  scheduleGatewayPoll(30000);
 })();
 </script>
 </body>
 </html>
+

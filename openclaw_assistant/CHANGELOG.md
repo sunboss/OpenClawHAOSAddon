@@ -3,6 +3,16 @@
 This project is now treated as a fresh baseline.
 Historical update records were intentionally removed.
 
+## [2026.04.02.15] - 2026-04-02
+
+### Changed
+- Redesign the landing page into a clearer two-column workspace so status and primary actions stay in the main column while diagnostics, help, and terminal tools move into a focused side column.
+
+### Fixed
+- Improve landing-page responsiveness by lazy-loading the embedded terminal instead of loading it on first paint.
+- Make gateway health polling visibility-aware so background tabs stop hammering `/health` until the page becomes active again.
+- Remove duplicated legacy runtime blocks from the landing page so buttons, PID normalization, and diagnostics only bind once.
+
 ## [2026.04.01.13] - 2026-04-01
 
 ### Fixed
