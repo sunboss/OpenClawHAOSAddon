@@ -910,7 +910,7 @@ SANEOF
 
   # Make CA cert available for download via nginx
   mkdir -p /etc/nginx/html
-  cp "$CERT_DIR/ca.crt" /etc/nginx/html/openclaw-ca.crt 2>/dev/null || true
+  install -m 0644 "$CERT_DIR/ca.crt" /etc/nginx/html/openclaw-ca.crt 2>/dev/null || true
   echo "INFO: CA certificate available for download at /cert/ca.crt on the HTTPS port"
 
 fi

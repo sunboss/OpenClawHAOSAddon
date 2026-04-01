@@ -3,6 +3,12 @@
 This project is now treated as a fresh baseline.
 Historical update records were intentionally removed.
 
+## [2026.04.01.13] - 2026-04-01
+
+### Fixed
+- Restore landing-page action buttons such as gateway status, gateway restart, and npm version check by replacing the broken runtime script path and keeping terminal shortcut clicks from reopening the large success panel.
+- Fix CA certificate downloads on `/cert/ca.crt` by installing the exported nginx copy with world-readable permissions instead of inheriting restrictive source file modes.
+
 ## [2026.04.01.12] - 2026-04-01
 
 ### Changed

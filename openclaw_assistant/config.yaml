@@ -1,5 +1,5 @@
 name: OpenClaw HAOS Add-on
-version: "2026.04.01.12"
+version: "2026.04.01.13"
 slug: openclaw_assistant
 description: Run OpenClaw inside Home Assistant OS as a dedicated HAOS add-on.
 url: https://github.com/sunboss/OpenClawHAOSAddon
