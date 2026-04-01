@@ -23,6 +23,8 @@ HA_TOKEN=$(jq -r '.homeassistant_token // empty' "$OPTIONS_FILE")
 ENABLE_GEMINI_MEMORY_SEARCH=$(jq -r '.enable_gemini_memory_search // false' "$OPTIONS_FILE")
 GEMINI_API_KEY_OPTION=$(jq -r '.gemini_api_key // empty' "$OPTIONS_FILE")
 GEMINI_MEMORY_MODEL=$(jq -r '.gemini_memory_model // "gemini-embedding-001"' "$OPTIONS_FILE")
+ENABLE_BRAVE_SEARCH=$(jq -r '.enable_brave_search // false' "$OPTIONS_FILE")
+BRAVE_API_KEY_OPTION=$(jq -r '.brave_api_key // empty' "$OPTIONS_FILE")
 ADDON_HTTP_PROXY=$(jq -r '.http_proxy // empty' "$OPTIONS_FILE")
 ENABLE_TERMINAL=$(jq -r '.enable_terminal // true' "$OPTIONS_FILE")
 TERMINAL_PORT_RAW=$(jq -r '.terminal_port // 7681' "$OPTIONS_FILE")
@@ -161,6 +163,10 @@ if [ -n "$ADDON_HTTP_PROXY" ]; then
   else
     echo "WARN: Invalid http_proxy value in add-on options; expected URL like http://host:port"
   fi
+fi
+
+if [ -n "$BRAVE_API_KEY_OPTION" ]; then
+  export BRAVE_API_KEY="$BRAVE_API_KEY_OPTION"
 fi
 
 # Optional network hardening/workaround: force IPv4-first DNS ordering for Node.js.
@@ -1005,6 +1011,22 @@ else
   openclaw config set agents.defaults.memorySearch.enabled false --json >/dev/null 2>&1 || true
 fi
 
+# ------------------------------------------------------------------------------
+# Optional Brave web search setup
+# Keeps the main chat model unchanged and only adjusts the web_search provider.
+# ------------------------------------------------------------------------------
+if [ "$ENABLE_BRAVE_SEARCH" = "true" ]; then
+  if [ -n "${BRAVE_API_KEY:-}" ]; then
+    echo "INFO: Configuring Brave Search as the official web_search provider ..."
+    openclaw config set tools.web.search.enabled true --json >/dev/null 2>&1 || true
+    openclaw config set tools.web.search.provider "brave" >/dev/null 2>&1 || true
+    echo "INFO: Brave Search configured; main chat model remains unchanged"
+  else
+    echo "WARN: Brave Search is enabled but brave_api_key is empty"
+    echo "WARN: Set brave_api_key in add-on Configuration or disable Brave Search"
+  fi
+fi
+
 start_openclaw_runtime() {
   echo "Starting OpenClaw HAOS Add-on runtime (openclaw)..."
   if [ "$GATEWAY_MODE" = "remote" ]; then
@@ -1363,6 +1385,18 @@ GW_PUBLIC_URL="$GW_PUBLIC_URL" TERMINAL_PORT="$TERMINAL_PORT" \
   MEMORY_SEARCH_MODEL="$(
     if [ -f /config/.openclaw/openclaw.json ]; then
       jq -r '.agents.defaults.memorySearch.model // empty' /config/.openclaw/openclaw.json 2>/dev/null || true
+    fi
+  )" \
+  WEB_SEARCH_ENABLED="$(
+    if [ -f /config/.openclaw/openclaw.json ]; then
+      jq -r 'if .tools.web.search.enabled != null then .tools.web.search.enabled elif (.tools.web.search.provider // "") != "" then true else false end' /config/.openclaw/openclaw.json 2>/dev/null || echo 'false'
+    else
+      echo 'false'
+    fi
+  )" \
+  WEB_SEARCH_PROVIDER="$(
+    if [ -f /config/.openclaw/openclaw.json ]; then
+      jq -r '.tools.web.search.provider // empty' /config/.openclaw/openclaw.json 2>/dev/null || true
     fi
   )" \
   GW_PID="${GW_PID:-}" \

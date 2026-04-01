@@ -3,6 +3,15 @@
 This project is now treated as a fresh baseline.
 Historical update records were intentionally removed.
 
+## [2026.04.01.9] - 2026-04-01
+
+### Changed
+- Add dedicated add-on configuration options for Brave Search so Home Assistant users can switch `web_search` from DuckDuckGo to the official Brave provider without hand-editing gateway config.
+
+### Fixed
+- Wire the new Brave Search options into startup so enabling the switch exports `BRAVE_API_KEY` and sets `tools.web.search.provider` to `brave` while leaving the main chat model untouched.
+- Unify landing-page diagnostics for MCP, web search, and memory search so each capability only appears when enabled and shows its current active provider/model instead of hard-coded assumptions.
+
 ## [2026.04.01.8] - 2026-04-01
 
 ### Changed

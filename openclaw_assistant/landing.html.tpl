@@ -550,6 +550,10 @@
       <span>MCP</span>
       <span class="diag-muted" id="diagMcp">__MCP_STATUS__</span>
     </div>
+    <div class="diag-row hidden" id="diagWebRow">
+      <span>Web Search</span>
+      <span class="diag-muted" id="diagWeb">-</span>
+    </div>
     <div class="diag-row hidden" id="diagMemoryRow">
       <span>Memory Search</span>
       <span class="diag-muted" id="diagMemory">-</span>
@@ -612,6 +616,8 @@ openclaw devices approve &lt;requestId&gt;</pre>
   var GW_URL = __GW_URL_JSON__;
   var TOKEN_AVAILABLE = __TOKEN_AVAILABLE_JSON__ === "true";
   var OC_VER = __OPENCLAW_VERSION_JSON__;
+  var WEB_SEARCH_ENABLED = __WEB_SEARCH_ENABLED_JSON__ === "true";
+  var WEB_SEARCH_PROVIDER = __WEB_SEARCH_PROVIDER_JSON__;
   var MEMORY_SEARCH_ENABLED = __MEMORY_SEARCH_ENABLED_JSON__ === "true";
   var MEMORY_SEARCH_PROVIDER = __MEMORY_SEARCH_PROVIDER_JSON__;
   var MEMORY_SEARCH_MODEL = __MEMORY_SEARCH_MODEL_JSON__;
@@ -888,6 +894,7 @@ openclaw devices approve &lt;requestId&gt;</pre>
   var mcpEl = $("diagMcp");
   if (mcpEl) {
     var st = mcpEl.textContent.trim().toLowerCase();
+    mcpEl.dataset.rawStatus = st;
     if (st === "registered" || st === "enabled") {
       mcpEl.textContent = "已注册";
       mcpEl.className = "diag-ok";
@@ -909,6 +916,31 @@ openclaw devices approve &lt;requestId&gt;</pre>
     } else if (!st) {
       mcpEl.textContent = "未配置";
       mcpEl.className = "diag-muted";
+    }
+  }
+
+  if (mcpEl) {
+    var mcpRow = mcpEl.closest(".diag-row");
+    var mcpState = (mcpEl.dataset.rawStatus || "").trim().toLowerCase();
+    if (mcpRow) {
+      if (mcpState === "disabled" || !mcpState) {
+        mcpRow.classList.add("hidden");
+      } else {
+        mcpRow.classList.remove("hidden");
+      }
+    }
+  }
+
+  var webRow = $("diagWebRow");
+  var webEl = $("diagWeb");
+  if (webRow && webEl) {
+    if (WEB_SEARCH_ENABLED) {
+      webEl.textContent = WEB_SEARCH_PROVIDER || "已启用";
+      webEl.className = "diag-ok";
+      webEl.title = WEB_SEARCH_PROVIDER ? "当前启用的 web_search provider" : "Web search 已启用";
+      webRow.classList.remove("hidden");
+    } else {
+      webRow.classList.add("hidden");
     }
   }
 

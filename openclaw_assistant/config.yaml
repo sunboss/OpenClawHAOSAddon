@@ -1,5 +1,5 @@
 name: OpenClaw HAOS Add-on
-version: "2026.04.01.8"
+version: "2026.04.01.9"
 slug: openclaw_assistant
 description: Run OpenClaw inside Home Assistant OS as a dedicated HAOS add-on.
 url: https://github.com/sunboss/OpenClawHAOSAddon
@@ -59,6 +59,15 @@ options:
 
   # Default Gemini embedding model for memory search when enabled.
   gemini_memory_model: "gemini-embedding-001"
+
+  # Enable Brave Search as the web_search provider.
+  # When enabled and a Brave API key is set, the add-on will export BRAVE_API_KEY
+  # and switch OpenClaw web search to the official Brave provider at startup.
+  enable_brave_search: false
+
+  # Optional Brave Search API key.
+  # This only affects the web_search tool and does not replace your main chat model.
+  brave_api_key: ""
 
   # Automatically approve pending local device pairing requests.
   # Recommended for personal HAOS installs where you are the only operator.
@@ -191,6 +200,8 @@ schema:
   enable_gemini_memory_search: bool?
   gemini_api_key: str?
   gemini_memory_model: str?
+  enable_brave_search: bool?
+  brave_api_key: str?
   auto_approve_device_pairing: bool?
   http_proxy: str?
 

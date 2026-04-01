@@ -49,6 +49,8 @@ def main() -> None:
     memory_search_enabled = env("MEMORY_SEARCH_ENABLED", "false")
     memory_search_provider = env("MEMORY_SEARCH_PROVIDER", "")
     memory_search_model = env("MEMORY_SEARCH_MODEL", "")
+    web_search_enabled = env("WEB_SEARCH_ENABLED", "false")
+    web_search_provider = env("WEB_SEARCH_PROVIDER", "")
     token_available = env("GATEWAY_TOKEN_AVAILABLE", "false")
     gw_pid = env("GW_PID", "-")
     nginx_pid = env("NGINX_PID", "-")
@@ -137,6 +139,8 @@ def main() -> None:
         "__MEMORY_SEARCH_ENABLED__": html.escape(memory_search_enabled),
         "__MEMORY_SEARCH_PROVIDER__": html.escape(memory_search_provider),
         "__MEMORY_SEARCH_MODEL__": html.escape(memory_search_model),
+        "__WEB_SEARCH_ENABLED__": html.escape(web_search_enabled),
+        "__WEB_SEARCH_PROVIDER__": html.escape(web_search_provider),
         "__GW_PID__": html.escape(gw_pid),
         "__NGINX_PID__": html.escape(nginx_pid),
         "__TTYD_PID__": html.escape(ttyd_pid),
@@ -158,6 +162,8 @@ def main() -> None:
         "__MEMORY_SEARCH_ENABLED_JSON__": js_string(memory_search_enabled),
         "__MEMORY_SEARCH_PROVIDER_JSON__": js_string(memory_search_provider),
         "__MEMORY_SEARCH_MODEL_JSON__": js_string(memory_search_model),
+        "__WEB_SEARCH_ENABLED_JSON__": js_string(web_search_enabled),
+        "__WEB_SEARCH_PROVIDER_JSON__": js_string(web_search_provider),
     }
 
     landing = landing_tpl
