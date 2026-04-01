@@ -3,6 +3,12 @@
 This project is now treated as a fresh baseline.
 Historical update records were intentionally removed.
 
+## [2026.04.01.10] - 2026-04-01
+
+### Fixed
+- Add a share-based backup path under `/share/openclaw-backup/latest` for `.openclaw` and `.mcporter`, so state is copied out of the add-on config area without turning the shared folder into a second live runtime.
+- Keep the shared copy backup-only: startup no longer restores from `share`, and the add-on continues to use `/config/.openclaw` and `/config/.mcporter` as the sole live state directories.
+
 ## [2026.04.01.9] - 2026-04-01
 
 ### Changed
@@ -11,6 +17,7 @@ Historical update records were intentionally removed.
 ### Fixed
 - Wire the new Brave Search options into startup so enabling the switch exports `BRAVE_API_KEY` and sets `tools.web.search.provider` to `brave` while leaving the main chat model untouched.
 - Unify landing-page diagnostics for MCP, web search, and memory search so each capability only appears when enabled and shows its current active provider/model instead of hard-coded assumptions.
+- Make Brave Search and Gemini memory-search startup wiring upgrade-safe by treating the add-on toggles as first-time initializers only, so later `openclaw onboard` or manual config changes are preserved across restarts and upgrades.
 
 ## [2026.04.01.8] - 2026-04-01
 

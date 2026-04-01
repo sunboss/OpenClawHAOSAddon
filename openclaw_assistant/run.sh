@@ -190,6 +190,9 @@ export OPENCLAW_WORKSPACE_DIR=/config/.openclaw/workspace
 export XDG_CONFIG_HOME=/config
 export MCPORTER_HOME_DIR=/config/.mcporter
 export MCPORTER_CONFIG="${MCPORTER_HOME_DIR}/mcporter.json"
+export SHARE_BACKUP_ROOT=/share/openclaw-backup/latest
+export SHARE_OPENCLAW_BACKUP_DIR="${SHARE_BACKUP_ROOT}/.openclaw"
+export SHARE_MCPORTER_BACKUP_DIR="${SHARE_BACKUP_ROOT}/.mcporter"
 
 mkdir -p \
   /config/.openclaw \
@@ -201,6 +204,29 @@ mkdir -p \
   /config/.mcporter \
   /config/keys \
   /config/secrets
+
+sync_dir_mirror() {
+  local src="$1"
+  local dst="$2"
+  if [ ! -d "$src" ]; then
+    return 0
+  fi
+  mkdir -p "$dst"
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a --delete "$src/" "$dst/" >/dev/null 2>&1 || return 1
+  else
+    cp -a "$src/." "$dst/" >/dev/null 2>&1 || return 1
+  fi
+}
+
+backup_state_to_share() {
+  if [ ! -d /share ]; then
+    return 0
+  fi
+  mkdir -p "$SHARE_BACKUP_ROOT"
+  sync_dir_mirror /config/.openclaw "$SHARE_OPENCLAW_BACKUP_DIR" || echo "WARN: Failed to back up OpenClaw state into $SHARE_OPENCLAW_BACKUP_DIR"
+  sync_dir_mirror "$MCPORTER_HOME_DIR" "$SHARE_MCPORTER_BACKUP_DIR" || echo "WARN: Failed to back up MCPorter state into $SHARE_MCPORTER_BACKUP_DIR"
+}
 
 ensure_mcporter_config() {
   mkdir -p "$MCPORTER_HOME_DIR"
@@ -611,6 +637,8 @@ shutdown() {
   if [ "$CLEAN_LOCKS_ON_EXIT" = "true" ]; then
     cleanup_session_locks || true
   fi
+
+  backup_state_to_share || true
 }
 
 trap shutdown INT TERM
@@ -993,41 +1021,65 @@ fi
 
 # ------------------------------------------------------------------------------
 # Optional Gemini memory search setup
-# Keeps the chat model unchanged and only adjusts memorySearch settings.
+# Keeps the chat model unchanged and only initializes memorySearch settings
+# when OpenClaw does not already have a provider configured.
 # ------------------------------------------------------------------------------
 if [ "$ENABLE_GEMINI_MEMORY_SEARCH" = "true" ]; then
   if [ -n "${GEMINI_API_KEY:-}" ]; then
-    echo "INFO: Configuring Gemini memory search (model=${GEMINI_MEMORY_MODEL}) ..."
-    openclaw config set agents.defaults.memorySearch.enabled true --json >/dev/null 2>&1 || true
-    openclaw config set agents.defaults.memorySearch.provider "gemini" >/dev/null 2>&1 || true
-    openclaw config set agents.defaults.memorySearch.model "$GEMINI_MEMORY_MODEL" >/dev/null 2>&1 || true
-    echo "INFO: Gemini memory search configured; main chat model remains unchanged"
+    CURRENT_MEMORY_PROVIDER="$(
+      jq -r '.agents.defaults.memorySearch.provider // empty' "$OPENCLAW_CONFIG_PATH" 2>/dev/null || true
+    )"
+    CURRENT_MEMORY_ENABLED="$(
+      jq -r '.agents.defaults.memorySearch.enabled // false' "$OPENCLAW_CONFIG_PATH" 2>/dev/null || echo 'false'
+    )"
+    if [ -z "$CURRENT_MEMORY_PROVIDER" ] && [ "$CURRENT_MEMORY_ENABLED" != "true" ]; then
+      echo "INFO: Initializing Gemini memory search (model=${GEMINI_MEMORY_MODEL}) ..."
+      openclaw config set agents.defaults.memorySearch.enabled true --json >/dev/null 2>&1 || true
+      openclaw config set agents.defaults.memorySearch.provider "gemini" >/dev/null 2>&1 || true
+      openclaw config set agents.defaults.memorySearch.model "$GEMINI_MEMORY_MODEL" >/dev/null 2>&1 || true
+      echo "INFO: Gemini memory search initialized; future onboard/manual changes will be preserved"
+    else
+      echo "INFO: Memory search already configured (provider=${CURRENT_MEMORY_PROVIDER:-none}, enabled=${CURRENT_MEMORY_ENABLED}); skipping startup override"
+    fi
   else
     echo "WARN: Gemini memory search is enabled but gemini_api_key is empty"
     echo "WARN: Set gemini_api_key in add-on Configuration or disable Gemini memory search"
   fi
 else
-  echo "INFO: Gemini memory search disabled from add-on configuration"
-  openclaw config set agents.defaults.memorySearch.enabled false --json >/dev/null 2>&1 || true
+  echo "INFO: Gemini memory search toggle is off; preserving existing OpenClaw memory search config"
 fi
 
 # ------------------------------------------------------------------------------
 # Optional Brave web search setup
-# Keeps the main chat model unchanged and only adjusts the web_search provider.
+# Keeps the main chat model unchanged and only initializes web_search when
+# OpenClaw does not already have a search provider configured.
 # ------------------------------------------------------------------------------
 if [ "$ENABLE_BRAVE_SEARCH" = "true" ]; then
   if [ -n "${BRAVE_API_KEY:-}" ]; then
-    echo "INFO: Configuring Brave Search as the official web_search provider ..."
-    openclaw config set tools.web.search.enabled true --json >/dev/null 2>&1 || true
-    openclaw config set tools.web.search.provider "brave" >/dev/null 2>&1 || true
-    echo "INFO: Brave Search configured; main chat model remains unchanged"
+    CURRENT_WEB_PROVIDER="$(
+      jq -r '.tools.web.search.provider // empty' "$OPENCLAW_CONFIG_PATH" 2>/dev/null || true
+    )"
+    CURRENT_WEB_ENABLED="$(
+      jq -r '.tools.web.search.enabled // false' "$OPENCLAW_CONFIG_PATH" 2>/dev/null || echo 'false'
+    )"
+    if [ -z "$CURRENT_WEB_PROVIDER" ] && [ "$CURRENT_WEB_ENABLED" != "true" ]; then
+      echo "INFO: Initializing Brave Search as the official web_search provider ..."
+      openclaw config set tools.web.search.enabled true --json >/dev/null 2>&1 || true
+      openclaw config set tools.web.search.provider "brave" >/dev/null 2>&1 || true
+      echo "INFO: Brave Search initialized; future onboard/manual changes will be preserved"
+    else
+      echo "INFO: Web search already configured (provider=${CURRENT_WEB_PROVIDER:-none}, enabled=${CURRENT_WEB_ENABLED}); skipping startup override"
+    fi
   else
     echo "WARN: Brave Search is enabled but brave_api_key is empty"
     echo "WARN: Set brave_api_key in add-on Configuration or disable Brave Search"
   fi
+else
+  echo "INFO: Brave Search toggle is off; preserving existing OpenClaw web search config"
 fi
 
 start_openclaw_runtime() {
+  backup_state_to_share || true
   echo "Starting OpenClaw HAOS Add-on runtime (openclaw)..."
   if [ "$GATEWAY_MODE" = "remote" ]; then
     # Remote mode: do NOT start a local gateway service.
