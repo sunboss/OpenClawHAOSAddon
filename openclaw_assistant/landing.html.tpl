@@ -808,7 +808,7 @@ openclaw devices approve &lt;requestId&gt;</pre>
     }
   }
   } */
-  function injectCommandToTerminal(command) {
+  function injectCommandToTerminal(command, submit) {
     var frame = $("termFrame");
     if (!frame || !frame.contentWindow) {
       setActionFeedback("warn", "\u7ec8\u7aef\u672a\u5c31\u7eea", "\u7ec8\u7aef\u5c1a\u672a\u5c31\u7eea\uff0c\u65e0\u6cd5\u586b\u5165\u547d\u4ee4\u3002");
@@ -821,13 +821,17 @@ openclaw devices approve &lt;requestId&gt;</pre>
         setActionFeedback("warn", "\u7ec8\u7aef\u672a\u5c31\u7eea", "\u7ec8\u7aef\u8f93\u5165\u6846\u6682\u4e0d\u53ef\u7528\uff0c\u8bf7\u5148\u70b9\u51fb\u4e00\u6b21\u4e0b\u65b9\u7ec8\u7aef\u3002");
         return;
       }
+      var payload = String(command || "");
+      if (submit && !/\n$/.test(payload)) {
+        payload += "\n";
+      }
       frame.contentWindow.focus();
       input.focus();
-      input.value = command;
+      input.value = payload;
       input.dispatchEvent(new InputEvent("input", {
         bubbles: true,
         cancelable: true,
-        data: command,
+        data: payload,
         inputType: "insertText"
       }));
       if ($("actionPanel")) { $("actionPanel").classList.add("hidden"); }
@@ -2139,59 +2143,16 @@ openclaw devices approve &lt;requestId&gt;</pre>
     });
   });
 
-  function runGatewayAction(action, label) {
-    setActionFeedback("warn", label + "\u4e2d", "\u8bf7\u7a0d\u5019\uff0c\u6b63\u5728\u8c03\u7528\u672c\u5730\u52a8\u4f5c\u670d\u52a1\u3002");
-    fetch(ingressUrl("action/" + action), {
-      method: "POST",
-      cache: "no-cache"
-    })
-      .then(function (r) {
-        return r.json().then(function (data) {
-          return { ok: r.ok, data: data };
-        });
-      })
-      .then(function (result) {
-        var data = result.data || {};
-        var output = data.stdout || data.stderr || "";
-        if (!result.ok || !data.ok) {
-          setActionFeedback("err", label + "\u5931\u8d25", "\u8bf7\u68c0\u67e5\u4e0b\u65b9\u8f93\u51fa\u3002", output || "\u65e0\u8f93\u51fa");
-          return;
-        }
-        setActionFeedback("ok", label + "\u5b8c\u6210", "\u547d\u4ee4\u6267\u884c\u6210\u529f\u3002", output || "");
-        if (action === "restart") {
-          setTimeout(checkGateway, 1500);
-        }
-      })
-      .catch(function () {
-        setActionFeedback("err", label + "\u5931\u8d25", "\u65e0\u6cd5\u8bbf\u95ee\u672c\u5730\u52a8\u4f5c\u670d\u52a1\u3002");
-      });
-  }
-
   $("gatewayStatusBtn").addEventListener("click", function () {
-    runGatewayAction("status", "\u67e5\u770b\u7f51\u5173\u72b6\u6001");
+    injectCommandToTerminal("openclaw gateway status --deep", true);
   });
 
   $("gatewayRestartBtn").addEventListener("click", function () {
-    runGatewayAction("restart", "\u91cd\u542f\u7f51\u5173");
+    injectCommandToTerminal("openclaw gateway restart", true);
   });
 
   $("checkUpdateBtn").addEventListener("click", function () {
-    setActionFeedback("warn", "\u68c0\u67e5 npm \u7248\u672c\u4e2d", "\u6b63\u5728\u8fde\u63a5 npm \u4ed3\u5e93\u3002");
-    fetch("https://registry.npmjs.org/openclaw/latest", { cache: "no-cache" })
-      .then(function (r) {
-        if (!r.ok) { throw new Error("npm"); }
-        return r.json();
-      })
-      .then(function (d) {
-        if (d.version && d.version !== OC_VER) {
-          setActionFeedback("warn", "\u53d1\u73b0\u65b0\u7248\u672c", "npm latest: " + d.version + " | current: " + OC_VER);
-        } else {
-          setActionFeedback("ok", "\u7248\u672c\u5df2\u662f\u6700\u65b0", "\u5f53\u524d\u5185\u7f6e\u7248\u672c\u5df2\u662f\u6700\u65b0\uff1a" + OC_VER);
-        }
-      })
-      .catch(function () {
-        setActionFeedback("err", "\u68c0\u67e5\u5931\u8d25", "\u5f53\u524d\u65e0\u6cd5\u8fde\u63a5\u5230 npm\u3002");
-      });
+    injectCommandToTerminal("curl -fsSL https://registry.npmjs.org/openclaw/latest | jq -r '\"npm latest: \" + .version'", true);
   });
 
   Array.prototype.forEach.call(document.querySelectorAll("[data-term-cmd]"), function (btn) {
