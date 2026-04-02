@@ -100,7 +100,7 @@ USER root
 
 # Install OpenClaw globally; version is pinned via ARG for reproducible builds.
 # Bump OPENCLAW_VERSION here (and in config.yaml) when upgrading.
-ARG OPENCLAW_VERSION=2026.3.31
+ARG OPENCLAW_VERSION=2026.4.1
 RUN npm config set fund false && npm config set audit false \
     && npm install -g openclaw@${OPENCLAW_VERSION} \
     && echo "Installed openclaw@$(openclaw --version 2>/dev/null || echo unknown)"
